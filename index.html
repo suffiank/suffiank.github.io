@@ -1,19 +1,64 @@
 <!DOCTYPE html>
 <head>
+
     <style>
-        .flex-container {
+        * {
+            margin: 0;
+            padding: 0;
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        }
+        .input-pane {
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            width: 200px;
+            background-color: #093145;
+            color: white;
+        }
+        .graph-pane {
+            display: flex;
+            position: absolute;
+            top: 0px;
+            left: 200px;
+            height: 40vh;
+            width: calc(100vw - 200px);
+            background-color: plum;
+        }
+        .cashflow-pane {
+            display: flex;
+            position: absolute;
+            top: 40vh;
+            left: 200px;
+            height: 60vh;
+            width: calc(100vw - 200px);
+            background-color: teal;
         }
     </style>
+
 </head>
 <body>
 
-    <!-- Input panel to left -->
-    <div class="flex-container">
-        <div>Monte Carlo simulator</div>
-        <div>inflation:</div>
-        <div>interest rate:</div>
+    <!-- input panel-->
+    <div class="input-pane">
+        <div style="text-align: center; margin-top: 10px">Monte Carlo simulator</div>
+        <div>
+            <p style="margin-left: 7.5%; margin-top: 10px">inflation rate</p>
+            <input type="number" name="inflation rate" style="margin-left: 7.5%; width: 85%;">
+        </div>
+        <div>
+            <p style="margin-left: 7.5%; margin-top: 10px">interest rate</p>
+            <input type="number" name="interest rate" style="margin-left: 7.5%; width: 85%;">
+        </div>
+    </div>
+
+    <!-- graph display --> 
+    <div class="graph-pane">
+        <div style="margin: auto">Graph Display</div>
+    </div>
+
+    <!-- graph display --> 
+    <div class="cashflow-pane">
+        <div style="margin: auto">Cash Flows Display</div>
     </div>
 
 </body>
