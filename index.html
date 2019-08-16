@@ -1,36 +1,42 @@
 <!DOCTYPE html>
 <head>
 
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
+        :root {
+            --input-pane-width: 125px;
+        }
         * {
             margin: 0;
             padding: 0;
             font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            font-size: 1.025em;
         }
         .input-pane {
             display: flex;
             flex-direction: column;
             height: 100vh;
-            width: 200px;
+            width: var(--input-pane-width);
             background-color: #093145;
             color: white;
         }
         .graph-pane {
             display: flex;
+            flex-direction: column;
             position: absolute;
             top: 0px;
-            left: 200px;
+            left: var(--input-pane-width);
             height: 40vh;
-            width: calc(100vw - 200px);
+            width: calc(100vw - var(--input-pane-width));
             background-color: plum;
         }
         .cashflow-pane {
             display: flex;
             position: absolute;
             top: 40vh;
-            left: 200px;
+            left: var(--input-pane-width);
             height: 60vh;
-            width: calc(100vw - 200px);
+            width: calc(100vw - var(--input-pane-width));
             background-color: teal;
         }
     </style>
@@ -40,26 +46,60 @@
 
     <!-- input panel-->
     <div class="input-pane">
-        <div style="text-align: center; margin-top: 10px">Monte Carlo simulator</div>
+        <div style="text-align: center; margin-top: 10px">Monte Carlo<br>Simulator</div>
         <div>
             <p style="margin-left: 7.5%; margin-top: 10px">inflation rate</p>
-            <input type="number" name="inflation rate" style="margin-left: 7.5%; width: 85%;">
+            <input type="number" name="inflation rate" value="2.0" style="margin-left: 7.5%; width: 85%; text-align: center;">
         </div>
         <div>
             <p style="margin-left: 7.5%; margin-top: 10px">interest rate</p>
-            <input type="number" name="interest rate" style="margin-left: 7.5%; width: 85%;">
+            <input type="number" name="interest rate" value="2.0" style="margin-left: 7.5%; width: 85%; text-align: center;">
         </div>
     </div>
 
     <!-- graph display --> 
     <div class="graph-pane">
-        <div style="margin: auto">Graph Display</div>
+        <div style="width: calc(100vw - 200px); height: 400px;" id="graph-display"></div>
     </div>
 
     <!-- graph display --> 
     <div class="cashflow-pane">
         <div style="margin: auto">Cash Flows Display</div>
     </div>
+
+    <script>
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        var trace1 = {
+            x: [1, 2, 3, 4],
+            y: [10, 15, 13, 17],
+            type: 'scatter',
+        };
+
+        var trace2 = {
+            x: [1, 2, 3, 4],
+            y: [16, 5, 11, 9],
+            type: 'scatter'
+        };
+
+        inputWidth = parseInt(
+            getComputedStyle(document.documentElement)
+            .getPropertyValue('--input-pane-width'));
+
+        var layout = {
+            showlegend: false, 
+            autosize: false, 
+            width: window.innerWidth - inputWidth, 
+            height: 0.4*window.innerHeight, 
+            margin: {l: 0, r: 0, b: 0, t: 0, pad: 2}
+        }
+
+        var data = [trace1, trace2];
+        Plotly.newPlot('graph-display', data, layout, {showSendToCloud: true});
+
+    </script>
 
 </body>
 </html>
