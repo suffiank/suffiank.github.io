@@ -21,6 +21,10 @@
             background-color: #093145;
             color: white;
         }
+        .parameter-text {
+            margin-top: 10px;
+            margin-left: 7.5%; 
+        }
         .parameter-box {
             margin-left: 7.5%; 
             width: 85%; 
@@ -38,6 +42,7 @@
             color: #107896;
         }
         .graph-canvas {
+            position: relative;
             height: var(--graph-pane-height);
             width: calc(100vw - var(--input-pane-width));   
         }
@@ -61,21 +66,20 @@
     <div class="input-pane">
         <div style="text-align: center; margin-top: 10px">Monte Carlo<br>Simulator</div>
         <div>
-            <p style="margin-left: 7.5%; margin-top: 10px">inflation rate</p>
+            <p class="parameter-text">inflation rate</p>
             <input class="parameter-box" type="number" name="inflation rate" value="2.0">
         </div>
         <div>
-            <p style="margin-left: 7.5%; margin-top: 10px">interest rate</p>
+            <p class="parameter-text">interest rate</p>
             <input class="parameter-box" type="number" name="interest rate" value="2.0">
         </div>
     </div>
 
     <!-- graph display --> 
     <div class="graph-pane">
-        <div id="graph-display">
-            <canvas class="graph-canvas" id="graph-canvas-id"></canvas>
+        <div class="graph-canvas" id="graph-display">
+            <canvas id="graph-canvas-id"></canvas>
         </div>
-        
     </div>
 
     <!-- graph display --> 
@@ -89,8 +93,6 @@
         }
 
         var canvas = document.getElementById('graph-canvas-id');
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
 
         var myChart = new Chart(canvas, {
             type: 'bar',
@@ -115,7 +117,7 @@
                         'rgba(153, 102, 255, 1)',
                         'rgba(255, 159, 64, 1)'
                     ],
-                    borderWidth: 1
+                    borderWidth: 1,
                 }]
             },
             options: {
@@ -125,7 +127,8 @@
                             beginAtZero: true
                         }
                     }]
-                }
+                },
+                maintainAspectRatio: false
             }
         });
     </script>
