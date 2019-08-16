@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <head>
 
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!--- <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
+    <!-- <script src="file://wsl%24/Ubuntu-18.04/home/sukha/suffiank.github.io/lib/Chart.bundle.js"></script> -->
+    <script src="suffiank.github.io/lib/Chart.bundle.css"></script>
     <style>
         :root {
             --input-pane-width: 125px;
+            --graph-pane-height: 40vh;
         }
         * {
             margin: 0;
@@ -26,18 +29,21 @@
             position: absolute;
             top: 0px;
             left: var(--input-pane-width);
-            height: 40vh;
+            height: var(--graph-pane-height);
             width: calc(100vw - var(--input-pane-width));
-            background-color: plum;
+            background-color: white;
+            color: #107896;
         }
         .cashflow-pane {
             display: flex;
             position: absolute;
-            top: 40vh;
+            top: var(--graph-pane-height);
             left: var(--input-pane-width);
-            height: 60vh;
+            height: calc(100vh - var(--graph-pane-height));
             width: calc(100vw - var(--input-pane-width));
-            background-color: teal;
+            background-color: white;
+            color: #107896;
+            box-shadow: 0 -1px 0 #000000;
         }
     </style>
 
@@ -59,7 +65,11 @@
 
     <!-- graph display --> 
     <div class="graph-pane">
-        <div style="width: calc(100vw - 200px); height: 400px;" id="graph-display"></div>
+        <div style="margin: auto;" id="graph-display">
+            Graph Display
+            <canvas id="myChart" width="400" height="400"></canvas>
+        </div>
+        
     </div>
 
     <!-- graph display --> 
@@ -72,7 +82,7 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        var trace1 = {
+        /* var trace1 = {
             x: [1, 2, 3, 4],
             y: [10, 15, 13, 17],
             type: 'scatter',
@@ -97,8 +107,46 @@
         }
 
         var data = [trace1, trace2];
-        Plotly.newPlot('graph-display', data, layout, {showSendToCloud: true});
+        Plotly.newPlot('graph-display', data, layout, {showSendToCloud: true}); */
 
+        var ctx = document.getElementById('myChart');
+
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                datasets: [{
+                    label: '# of Votes',
+                    data: [12, 19, 3, 5, 2, 3],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
     </script>
 
 </body>
