@@ -44,7 +44,7 @@
         .graph-canvas {
             position: relative;
             height: var(--graph-pane-height);
-            width: calc(100vw - var(--input-pane-width));   
+            width: calc(100vw - var(--input-pane-width));
         }
         .cashflow-pane {
             display: flex;
@@ -88,47 +88,60 @@
     </div>
 
     <script>
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
+        function float2dollar(value){
+            return "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");;
         }
+
 
         var canvas = document.getElementById('graph-canvas-id');
 
+        const data = {
+            // Labels should be Date objects
+            labels: [
+                new Date(2019, 08, 16), 
+                new Date(2019, 09, 16), 
+                new Date(2019, 10, 16),
+                new Date(2025, 06, 16)
+            ],
+            datasets: [{
+                fill: true,
+                label: 'Market Value',
+                data: [5000, 20000, 40000, 100000],
+                borderColor: 'green',
+                backgroundColor: '#00440077',
+                lineTension: 0,
+            }]
+        }
+
         var myChart = new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-                datasets: [{
-                    label: '# of Votes',
-                    data: [12, 19, 3, 5, 2, 3],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1,
-                }]
-            },
+            type: 'line',
+            data: data,
             options: {
+                title: {
+                    display: true,
+                    text: 'Market Value',
+                    position: 'top'
+                },
+                maintainAspectRatio: false,
                 scales: {
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'month'
+                        }
+                    }],
                     yAxes: [{
                         ticks: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            callback: function(value, index, values) {
+                                return float2dollar(value);
+                            }
                         }
                     }]
                 },
-                maintainAspectRatio: false
+                legend: {
+                    display: false
+                }
             }
         });
     </script>
