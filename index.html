@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <head>
 
-    <!--- <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
-    <!-- <script src="file://wsl%24/Ubuntu-18.04/home/sukha/suffiank.github.io/lib/Chart.bundle.js"></script> -->
-    <script src="suffiank.github.io/lib/Chart.bundle.js"></script>
+    <script src="http://montecarlo.sufkha.net/lib/Chart.bundle.js"></script>
     <style>
         :root {
             --input-pane-width: 125px;
@@ -23,6 +21,11 @@
             background-color: #093145;
             color: white;
         }
+        .parameter-box {
+            margin-left: 7.5%; 
+            width: 85%; 
+            text-align: center;
+        }
         .graph-pane {
             display: flex;
             flex-direction: column;
@@ -33,6 +36,10 @@
             width: calc(100vw - var(--input-pane-width));
             background-color: white;
             color: #107896;
+        }
+        .graph-canvas {
+            height: var(--graph-pane-height);
+            width: calc(100vw - var(--input-pane-width));   
         }
         .cashflow-pane {
             display: flex;
@@ -55,19 +62,18 @@
         <div style="text-align: center; margin-top: 10px">Monte Carlo<br>Simulator</div>
         <div>
             <p style="margin-left: 7.5%; margin-top: 10px">inflation rate</p>
-            <input type="number" name="inflation rate" value="2.0" style="margin-left: 7.5%; width: 85%; text-align: center;">
+            <input class="parameter-box" type="number" name="inflation rate" value="2.0">
         </div>
         <div>
             <p style="margin-left: 7.5%; margin-top: 10px">interest rate</p>
-            <input type="number" name="interest rate" value="2.0" style="margin-left: 7.5%; width: 85%; text-align: center;">
+            <input class="parameter-box" type="number" name="interest rate" value="2.0">
         </div>
     </div>
 
     <!-- graph display --> 
     <div class="graph-pane">
-        <div style="margin: auto;" id="graph-display">
-            Graph Display
-            <canvas id="myChart" width="400" height="400"></canvas>
+        <div id="graph-display">
+            <canvas class="graph-canvas" id="graph-canvas-id"></canvas>
         </div>
         
     </div>
@@ -82,36 +88,11 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        /* var trace1 = {
-            x: [1, 2, 3, 4],
-            y: [10, 15, 13, 17],
-            type: 'scatter',
-        };
+        var canvas = document.getElementById('graph-canvas-id');
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
 
-        var trace2 = {
-            x: [1, 2, 3, 4],
-            y: [16, 5, 11, 9],
-            type: 'scatter'
-        };
-
-        inputWidth = parseInt(
-            getComputedStyle(document.documentElement)
-            .getPropertyValue('--input-pane-width'));
-
-        var layout = {
-            showlegend: false, 
-            autosize: false, 
-            width: window.innerWidth - inputWidth, 
-            height: 0.4*window.innerHeight, 
-            margin: {l: 0, r: 0, b: 0, t: 0, pad: 2}
-        }
-
-        var data = [trace1, trace2];
-        Plotly.newPlot('graph-display', data, layout, {showSendToCloud: true}); */
-
-        var ctx = document.getElementById('myChart');
-
-        var myChart = new Chart(ctx, {
+        var myChart = new Chart(canvas, {
             type: 'bar',
             data: {
                 labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
