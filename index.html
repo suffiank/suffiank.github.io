@@ -92,21 +92,53 @@
             return "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");;
         }
 
+        let age0 = 55.0;
+        let age1 = 90.0;
+
+        let T = age1-age0;
+        let dT = 1.0/365.0;
+  
+        let nsteps = Math.floor(T/dT);
+        let trials = 1;
+    
+        let stock_stddev = 0.20;
+        let stock_return = 0.05;
+        let stock_price = 10000.0;
+
+        let today = new Date().getTime();
+
+        let time_data = [];
+        let price_data = [];
+        let dead = false; 
+
+        for (let i = 0; i < nsteps; i++) {
+
+            let delta = stock_stddev * Math.sqrt(dT);
+            delta *= ( Math.random() < 0.5? -1.0 : 1.0 );
+
+            let step_return = 1.0 + stock_return*dT + delta;
+            stock_price *= step_return;
+            console.log(step_return);
+
+            if (stock_price < 0.0) dead = true;
+            stock_price = Math.max(stock_price, 0.0);
+            if (dead) stock_price = 0.0;
+
+            if (i % 182 == 0) {
+                time_data.push(new Date(today + 365*24*3600*1000*i*dT));
+                price_data.push(stock_price);
+            }
+        }
 
         var canvas = document.getElementById('graph-canvas-id');
 
         const data = {
-            // Labels should be Date objects
-            labels: [
-                new Date(2019, 08, 16), 
-                new Date(2019, 09, 16), 
-                new Date(2019, 10, 16),
-                new Date(2025, 06, 16)
-            ],
+
+            labels: time_data,
             datasets: [{
                 fill: true,
                 label: 'Market Value',
-                data: [5000, 20000, 40000, 100000],
+                data: price_data,
                 borderColor: 'green',
                 backgroundColor: '#00440077',
                 lineTension: 0,
@@ -127,7 +159,7 @@
                     xAxes: [{
                         type: 'time',
                         time: {
-                            unit: 'month'
+                            unit: 'year'
                         }
                     }],
                     yAxes: [{
