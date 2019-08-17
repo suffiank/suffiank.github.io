@@ -34,6 +34,11 @@
             width: 85%; 
             text-align: center;
         }
+        .simulate-button {
+            margin-top: 15px;
+            margin-left: 7.5%; 
+            width: 87%;
+        }
         .graph-pane {
             display: flex;
             flex-direction: column;
@@ -79,8 +84,23 @@
             <input class="parameter-box" type="number" name="inflation rate" value="2.0">
         </div>
         <div>
-            <p class="parameter-text">interest rate</p>
+            <p class="parameter-text">interest sigma</p>
             <input class="parameter-box" type="number" name="interest rate" value="2.0">
+        </div>
+        <div>
+            <p class="parameter-text">social security</p>
+            <input class="parameter-box" type="number" name="interest rate" value="2.0">
+        </div>
+        <div>
+            <p class="parameter-text">expenditures</p>
+            <input class="parameter-box" type="number" name="interest rate" value="2.0">
+        </div>
+        <div>
+            <p class="parameter-text">healthcare</p>
+            <input class="parameter-box" type="number" name="interest rate" value="2.0">
+        </div>
+        <div>
+            <input class="simulate-button" type="button" name="interest rate" value="simulate">
         </div>
     </div>
 
@@ -113,7 +133,7 @@
     
         let stock_stddev = 0.20;
         let stock_return = 0.05;
-        let stock_price = 10000.0;
+        let stock_price = 3000000.0;
 
         let today = new Date().getTime();
 
@@ -193,10 +213,9 @@
 
         var table = new Tabulator("#cashflow-table-id", {
             data:tabledata, 
-            layout:"fitData",
+            layout:"fitColumns",
             columns:[
-                {title:"Year", field:"year", formatter: "timestamp", 
-                formatterParams:{inputFormat: "timestam", outputFormat:"YYYY", humanize: true}},
+                {title:"Year", field:"year"},
                 {title:"Fair Value", field:"value", align:"right", formatter:"money", formatterParams: {symbol: "$"}}
             ],
         });
