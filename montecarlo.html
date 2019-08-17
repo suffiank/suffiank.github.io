@@ -212,7 +212,9 @@
         }
 
         var table = new Tabulator("#cashflow-table-id", {
-            data:tabledata, 
+            data: tabledata, 
+            clipboard: true,
+            selectable: true,
             layout:"fitColumns",
             columns:[
                 {title:"Year", field:"year"},
