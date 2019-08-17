@@ -1,105 +1,141 @@
 
-function float2dollar(value) {
-    return "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");;
+"use strict";
+
+function onPageLoad() {
+
+    refreshSimulation();
 }
 
-let age0 = 55.0;
-let age1 = 90.0;
+function refreshSimulation() {
+   
+    let data = simulateRandomWalk();
 
-let T = age1-age0;
-let dT = 1.0/365.0;
+    refreshGraph(data);
+    refreshTable(data);
+}
 
-let nsteps = Math.floor(T/dT);
-let trials = 1;
+function refreshGraph(data) {
 
-// Warning! Do not include PII
-let stock_stddev = 0.20;
-let stock_return = 0.05;
-let stock_price = 10000.0;
+    let time_data = data.map(a => a.time);
+    let value_data = data.map(a => a.value);
 
-let today = new Date().getTime();
+    let canvas = document.getElementById('graph-canvas-id');
 
-let time_data = [];
-let price_data = [];
-let dead = false; 
+    const data_feed = {
 
-for (let i = 0; i < nsteps; i++) {
-
-    let delta = stock_stddev * Math.sqrt(dT);
-    delta *= ( Math.random() < 0.5? -1.0 : 1.0 );
-
-    let step_return = 1.0 + stock_return*dT + delta;
-    stock_price *= step_return;
-
-    if (stock_price < 0.0) dead = true;
-    stock_price = Math.max(stock_price, 0.0);
-    if (dead) stock_price = 0.0;
-
-    if (i % 91 == 0) {
-        time_data.push(new Date(today + 365*24*3600*1000*i*dT));
-        price_data.push(stock_price.toFixed(0));
+        labels: time_data,
+        datasets: [{
+            fill: true,
+            label: 'Market Value',
+            data: value_data,
+            borderColor: 'green',
+            backgroundColor: '#00440077',
+            lineTension: 0,
+        }]
     }
-}
 
-var canvas = document.getElementById('graph-canvas-id');
-
-const data = {
-
-    labels: time_data,
-    datasets: [{
-        fill: true,
-        label: 'Market Value',
-        data: price_data,
-        borderColor: 'green',
-        backgroundColor: '#00440077',
-        lineTension: 0,
-    }]
-}
-
-var myChart = new Chart(canvas, {
-    type: 'line',
-    data: data,
-    options: {
-        title: {
-            display: true,
-            text: 'Market Value',
-            position: 'top'
-        },
-        maintainAspectRatio: false,
-        scales: {
-            xAxes: [{
-                type: 'time',
-                time: {
-                    unit: 'year'
-                }
-            }],
-            yAxes: [{
-                ticks: {
-                    beginAtZero: true,
-                    callback: function(value, index, values) {
-                        return float2dollar(value);
+    let myChart;
+    if (typeof myChart !== 'undefined') {
+        myChart.destroy();
+    }
+    myChart = new Chart(canvas, {
+        type: 'line',
+        data: data_feed,
+        options: {
+            title: {
+                display: true,
+                text: 'Market Value',
+                position: 'top'
+            },
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{
+                    type: 'time',
+                    time: {
+                        unit: 'year'
                     }
-                }
-            }]
-        },
-        legend: {
-            display: false
+                }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value, index, values) {
+                            return "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        }
+                    }
+                }]
+            },
+            legend: {
+                display: false
+            }
+        }
+    });
+}
+
+function refreshTable(data) {
+
+    let time_data = data.map(a => a.time);
+    let value_data = data.map(a => a.value);
+
+    let tabledata = [];
+    for (let i = 0; i < time_data.length; i++) {
+        tabledata.push({id: i, year: time_data[i].toLocaleDateString("en-US"), value: parseFloat(value_data[i])});
+    }
+
+    let table = new Tabulator("#cashflow-table-id", {
+        data: tabledata, 
+        clipboard: true,
+        selectable: true,
+        layout:"fitColumns",
+        columns:[
+            {title:"Year", field:"year"},
+            {title:"Fair Value", field:"value", align:"right", formatter:"money", formatterParams: {symbol: "$"}}
+        ],
+    });
+}
+
+function simulateRandomWalk() {
+
+    // pull input parameters from page
+    let age0 = document.getElementById("start-age").value;
+    let age1 = document.getElementById("end-age").value;
+    let initial_cash = document.getElementById("start-cash").value;
+
+    const simulation_step = 1.0/365.0;
+    const recording_step = 1.0/4.0;
+
+    // all units per annum
+    let step = simulation_step;
+    let nyears = age1-age0;
+    let nsteps = Math.floor(nyears/step);
+
+    let spdr_stddev = 0.20;
+    let spdr_return = 0.05;
+    let spdr_price = 289.0;
+    let spdr_units = Math.floor(initial_cash/spdr_price);
+
+    let today = new Date().getTime();
+    let lastRecordedAt = -1e5;
+
+    let data = [];
+    for (let i = 0; i < nsteps; i++) {
+
+        let spdr_delta = spdr_stddev * Math.sqrt(step);
+        spdr_delta *= (Math.random() < 0.5? -1.0 : 1.0);
+        spdr_price *= 1.0 + step*spdr_return + spdr_delta;
+        if (spdr_price < 0.0) spdr_price = 0.0;
+
+        let time = i*step;
+        if (time - lastRecordedAt > recording_step) {
+
+            var point = {
+                time: new Date(today + 365*24*3600*1000*time),
+                value: spdr_units*spdr_price.toFixed(0)
+            }
+            data.push(point);
+
+            lastRecordedAt = time;
         }
     }
-});
 
-var tabledata = [];
-for (let i = 0; i < time_data.length; i++) {
-    tabledata.push({id: i, year: time_data[i].toLocaleDateString("en-US"), value: parseFloat(price_data[i])});
+    return data;
 }
-
-var table = new Tabulator("#cashflow-table-id", {
-    data: tabledata, 
-    clipboard: true,
-    selectable: true,
-    layout:"fitColumns",
-    columns:[
-        {title:"Year", field:"year"},
-        {title:"Fair Value", field:"value", align:"right", formatter:"money", formatterParams: {symbol: "$"}}
-    ],
-});

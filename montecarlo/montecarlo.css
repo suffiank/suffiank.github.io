@@ -11,7 +11,7 @@
 .input-pane {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
     width: var(--input-pane-width);
     background-color: #093145;
     color: white;
@@ -61,7 +61,7 @@
     position: absolute;
     top: var(--graph-pane-height);
     left: var(--input-pane-width);
-    height: calc(100vh - var(--graph-pane-height));
+    min-height: calc(100vh - var(--graph-pane-height));
     width: calc(100vw - var(--input-pane-width) );
     background-color: white;
     color: #107896;

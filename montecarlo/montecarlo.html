@@ -12,55 +12,63 @@
     <link rel="stylesheet" type="text/css" href="montecarlo.css" />
 
 </head>
-<body>
+<body onload="onPageLoad()">
 
-    <!-- simulation input parameters pane-->
+    <!-- simulation input parameters pane (do not include PII) -->
     <div class="input-pane">
         <div class="page-title">
             Monte Carlo<br>Simulator
         </div>
         <div>
-            <p class="parameter-text">starting age</p>
-            <input class="parameter-box" type="number" name="start age" value="25">
+            <p class="parameter-text">start age</p>
+            <input class="parameter-box" type="number" name="start-age" id="start-age" value="25">
         </div>
         <div>
-            <p class="parameter-text">ending age</p>
-            <input class="parameter-box" type="number" name="end age" value="90">
+            <p class="parameter-text">end age</p>
+            <input class="parameter-box" type="number" name="end-age" id="end-age" value="90">
+        </div>
+        <div>
+            <p class="parameter-text">start cash</p>
+            <input class="parameter-box" type="number" name="start-cash" id="start-cash" value="10000">
         </div>
         <div>
             <p class="parameter-text">inflation rate</p>
-            <input class="parameter-box" type="number" name="inflation rate" value="2.0">
+            <input class="parameter-box" type="number" name="inflation-rate" id="inflation-rate" value="2.0">
         </div>
         <div>
             <p class="parameter-text">inflation sigma</p>
             <p class="parameter-subtext">per annum volatility</p>
-            <input class="parameter-box" type="number" name="inflation sigma" value="0.0">
+            <input class="parameter-box" type="number" name="inflation-sigma" id="inflation-sigma" value="0.0">
         </div>
         <div>
             <p class="parameter-text">interest rate</p>
-            <input class="parameter-box" type="number" name="interest rate" value="2.0">
+            <input class="parameter-box" type="number" name="interest-rate" id="interest-rate" value="2.0">
         </div>
         <div>
             <p class="parameter-text">interest sigma</p>
-            <input class="parameter-box" type="number" name="interest sigma" value="0.0">
+            <input class="parameter-box" type="number" name="interest-sigma" id="interest-sigma" value="0.0">
         </div>
         <div>
             <p class="parameter-text">social security</p>
             <p class="parameter-subtext">per annum benefit</p>
-            <input class="parameter-box" type="number" name="social security" value="30000">
+            <input class="parameter-box" type="number" name="social-security" id="social-security" value="30000">
         </div>
         <div>
             <p class="parameter-text">healthcare</p>
             <p class="parameter-subtext">per annum (until 65)</p>
-            <input class="parameter-box" type="number" name="healthcare" value="5000">
+            <input class="parameter-box" type="number" name="healthcare" id="healthcare" value="5000">
         </div>
         <div>
             <p class="parameter-text">expenditure</p>
             <p class="parameter-subtext">per annum (starting)</p>
-            <input class="parameter-box" type="number" name="expenditures" value="40000">
+            <input class="parameter-box" type="number" name="expenditure" id="expenditure" value="40000">
         </div>
         <div>
-            <input class="simulate-button" type="button" name="simulate" value="simulate">
+            <p class="parameter-text">trials</p>
+            <input class="parameter-box" type="number" name="trials" id="trials" value="1">
+        </div>
+        <div>
+            <input class="simulate-button" type="button" onclick="refreshSimulation()" name="simulate" id="simulate" value="simulate">
         </div>
     </div>
 
