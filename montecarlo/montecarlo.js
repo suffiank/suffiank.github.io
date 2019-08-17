@@ -8,89 +8,15 @@ function onPageLoad() {
 
 function refreshSimulation() {
    
-    let data = simulateRandomWalk();
+    let ntrials = document.getElementById("trials").value;
+
+    let data = []
+    for (let i = 0; i < ntrials; i++) {
+        data.push(simulateRandomWalk());
+    }
 
     refreshGraph(data);
     refreshTable(data);
-}
-
-var myChart;
-function refreshGraph(data) {
-
-    let time_data = data.map(a => a.time);
-    let value_data = data.map(a => a.value);
-
-    let canvas = document.getElementById('graph-canvas-id');
-
-    const data_feed = {
-
-        labels: time_data,
-        datasets: [{
-            fill: true,
-            label: 'Market Value',
-            data: value_data,
-            borderColor: 'green',
-            backgroundColor: '#00440077',
-            lineTension: 0,
-        }]
-    }
-
-    if (typeof myChart !== 'undefined') {
-        myChart.destroy();
-    }
-    myChart = new Chart(canvas, {
-        type: 'line',
-        data: data_feed,
-        options: {
-            title: {
-                display: true,
-                text: 'Market Value',
-                position: 'top'
-            },
-            maintainAspectRatio: false,
-            scales: {
-                xAxes: [{
-                    type: 'time',
-                    time: {
-                        unit: 'year'
-                    }
-                }],
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        callback: function(value, index, values) {
-                            return "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                        }
-                    }
-                }]
-            },
-            legend: {
-                display: false
-            }
-        }
-    });
-}
-
-function refreshTable(data) {
-
-    let time_data = data.map(a => a.time);
-    let value_data = data.map(a => a.value);
-
-    let tabledata = [];
-    for (let i = 0; i < time_data.length; i++) {
-        tabledata.push({id: i, year: time_data[i].toLocaleDateString("en-US"), value: parseFloat(value_data[i])});
-    }
-
-    let table = new Tabulator("#cashflow-table-id", {
-        data: tabledata, 
-        clipboard: true,
-        selectable: true,
-        layout:"fitColumns",
-        columns:[
-            {title:"Year", field:"year"},
-            {title:"Fair Value", field:"value", align:"right", formatter:"money", formatterParams: {symbol: "$"}}
-        ],
-    });
 }
 
 function simulateRandomWalk() {
@@ -138,4 +64,112 @@ function simulateRandomWalk() {
     }
 
     return data;
+}
+
+var chart;
+function refreshGraph(data) {
+
+    let time_data = data[0].map(a => a.time);
+    let value_data = data.map(trial => trial.map(b => b.value));
+
+    let datasets = [];
+    for (let i = 0; i < data.length; i++) {
+        datasets.push({
+            fill: true,
+            label: 'Market Value',
+            data: value_data[i],
+            borderColor: 'green',
+            backgroundColor: '#00440077',
+            lineTension: 0,
+        });
+    }
+
+    const data_feed = {
+        labels: time_data,
+        datasets: datasets
+    }
+
+    if (typeof chart === 'undefined') {
+
+        let canvas = document.getElementById('graph-canvas-id');
+        chart = new Chart(canvas, {
+            type: 'line',
+            data: data_feed,
+            options: {
+                title: {
+                    display: true,
+                    text: 'Market Value',
+                    position: 'top'
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'year'
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            callback: function(value, index, values) {
+                                return "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                            }
+                        }
+                    }]
+                },
+                legend: {
+                    display: false
+                }
+            }
+        });
+    }
+    else {
+        chart.data = data_feed;
+        chart.update();
+    }
+}
+
+var table;
+function refreshTable(data) {
+
+    let time_data = data[0].map(a => a.time);
+    let value_data = data.map(trial => trial.map(b => b.value));
+
+    // define fields
+    let fields = [{title: "Year", field: "year"}];
+    for (let trial = 0; trial < data.length; trial++) {
+
+        fields.push({
+            title:`Value (Trial #${trial+1})`, 
+            field:`value${trial}`, 
+            align:"right", 
+            formatter:"money", 
+            formatterParams: {symbol: "$"}
+        });
+    }
+
+    // define row data
+    let rows = [];
+    for (let time = 0; time < time_data.length; time++) {
+        let row = {id: time, year: time_data[time].toLocaleDateString("en-US")};
+        for (let trial = 0; trial < data.length; trial++) {
+            row[`value${trial}`] = parseFloat(value_data[trial][time]);
+        }
+        rows.push(row);
+    }
+
+    // display table
+    if (typeof table === 'undefined') {
+        table = new Tabulator("#cashflow-table-id", {
+            data: rows, 
+            clipboard: true,
+            layout:"fitColumns",
+            columns:fields,
+        });
+    }
+    else {
+        table.setColumns(fields);
+        table.replaceData(rows);
+    }
 }
