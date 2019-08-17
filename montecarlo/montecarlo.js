@@ -14,6 +14,7 @@ function refreshSimulation() {
     refreshTable(data);
 }
 
+var myChart;
 function refreshGraph(data) {
 
     let time_data = data.map(a => a.time);
@@ -34,7 +35,6 @@ function refreshGraph(data) {
         }]
     }
 
-    let myChart;
     if (typeof myChart !== 'undefined') {
         myChart.destroy();
     }
