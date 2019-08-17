@@ -15,8 +15,19 @@ function refreshSimulation() {
         data.push(simulateRandomWalk());
     }
 
-    refreshGraph(data);
-    refreshTable(data);
+    // retain only 25th, 50th, and 75th percentile
+    let index25 = Math.floor(0.25*data.length);
+    let index50 = Math.floor(0.50*data.length);
+    let index75 = Math.floor(0.75*data.length);
+
+    let pruned = []
+    data = data.sort((a,b) => parseFloat(a[a.length-1].value) < parseFloat(b[b.length-1].value)? -1:1);
+    pruned.push(data[index25]);
+    pruned.push(data[index50]);
+    pruned.push(data[index75]);
+
+    refreshGraph(pruned);
+    refreshTable(pruned);
 }
 
 function simulateRandomWalk() {
@@ -78,8 +89,8 @@ function refreshGraph(data) {
             fill: true,
             label: 'Market Value',
             data: value_data[i],
-            borderColor: 'green',
-            backgroundColor: '#00440077',
+            borderColor: i == 0? 'red' : (i == 1? 'yellow' : 'green'),
+            backgroundColor: i == 0? '#44000077' : (i == 1? '#44440077' : '#00440077'),
             lineTension: 0,
         });
     }
@@ -140,8 +151,9 @@ function refreshTable(data) {
     let fields = [{title: "Year", field: "year"}];
     for (let trial = 0; trial < data.length; trial++) {
 
+        let percentile = Math.floor(100.0*(trial+1)/(data.length+1)).toString() + "th %";
         fields.push({
-            title:`Value (Trial #${trial+1})`, 
+            title:`Value (${percentile}tile)`, 
             field:`value${trial}`, 
             align:"right", 
             formatter:"money", 
