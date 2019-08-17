@@ -2,10 +2,14 @@
 <head>
 
     <script src="https://suffiank.github.io/lib/Chart.bundle.js"></script>
+
+    <link href="https://suffiank.github.io/lib/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://suffiank.github.io/lib/js/tabulator.min.js"></script>
+
     <style>
         :root {
             --input-pane-width: 125px;
-            --graph-pane-height: 40vh;
+            --graph-pane-height: 45vh;
         }
         * {
             margin: 0;
@@ -44,7 +48,7 @@
         .graph-canvas {
             position: relative;
             height: var(--graph-pane-height);
-            width: calc(100vw - var(--input-pane-width));
+            width: calc(100vw - var(--input-pane-width) - 5px);
         }
         .cashflow-pane {
             display: flex;
@@ -93,47 +97,41 @@
             return "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");;
         }
 
-        function simulate() {
+        let age0 = 55.0;
+        let age1 = 90.0;
 
-            let age0 = 55.0;
-            let age1 = 90.0;
+        let T = age1-age0;
+        let dT = 1.0/365.0;
 
-            let T = age1-age0;
-            let dT = 1.0/365.0;
+        let nsteps = Math.floor(T/dT);
+        let trials = 1;
     
-            let nsteps = Math.floor(T/dT);
-            let trials = 1;
-        
-            let stock_stddev = 0.20;
-            let stock_return = 0.05;
-            let stock_price = 10000.0;
+        let stock_stddev = 0.20;
+        let stock_return = 0.05;
+        let stock_price = 10000.0;
 
-            let today = new Date().getTime();
+        let today = new Date().getTime();
 
-            let time_data = [];
-            let price_data = [];
-            let dead = false; 
+        let time_data = [];
+        let price_data = [];
+        let dead = false; 
 
-            for (let i = 0; i < nsteps; i++) {
+        for (let i = 0; i < nsteps; i++) {
 
-                let delta = stock_stddev * Math.sqrt(dT);
-                delta *= ( Math.random() < 0.5? -1.0 : 1.0 );
+            let delta = stock_stddev * Math.sqrt(dT);
+            delta *= ( Math.random() < 0.5? -1.0 : 1.0 );
 
-                let step_return = 1.0 + stock_return*dT + delta;
-                stock_price *= step_return;
-                console.log(step_return);
+            let step_return = 1.0 + stock_return*dT + delta;
+            stock_price *= step_return;
 
-                if (stock_price < 0.0) dead = true;
-                stock_price = Math.max(stock_price, 0.0);
-                if (dead) stock_price = 0.0;
+            if (stock_price < 0.0) dead = true;
+            stock_price = Math.max(stock_price, 0.0);
+            if (dead) stock_price = 0.0;
 
-                if (i % 182 == 0) {
-                    time_data.push(new Date(today + 365*24*3600*1000*i*dT));
-                    price_data.push(stock_price.toFixed(0));
-                }
+            if (i % 91 == 0) {
+                time_data.push(new Date(today + 365*24*3600*1000*i*dT));
+                price_data.push(stock_price.toFixed(0));
             }
-
-            return (time_data, price_data);
         }
 
         var canvas = document.getElementById('graph-canvas-id');
