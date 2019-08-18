@@ -32,9 +32,9 @@
             <input class="parameter-box" type="number" name="mc-step" id="mc-step" value="1" min="0.01" max="365" step="0.1">
         </div>
         <div>
-            <p class="parameter-text">recording step</p>
+            <p class="parameter-text">printing step</p>
             <p class="parameter-subtext">number of days</p>
-            <input class="parameter-box" type="number" name="record-step" id="record-step" value="90" min="1" max="730" step="1">
+            <input class="parameter-box" type="number" name="print-step" id="print-step" value="365" min="1" max="730" step="1">
         </div>
         <div>
             <p class="parameter-text">age</p>
@@ -43,16 +43,26 @@
         </div>
         <div>
             <p class="parameter-text">stop year</p>
-            <input class="parameter-box" type="number" name="end-year" id="end-year" value="2050" min="2020" max="2100" step="1">
+            <input class="parameter-box" type="number" name="end-year" id="end-year" value="2030" min="2020" max="2100" step="1">
         </div>
         <div>
             <p class="parameter-text">cash</p>
             <p class="parameter-subtext">starting point</p>
-            <input class="parameter-box" type="number" name="start-cash" id="start-cash" value="10000" min="10" max="100000000">
+            <input class="parameter-box" type="number" name="start-cash" id="start-cash" value="15000" min="10" max="100000000">
         </div>
         <div>
             <p class="parameter-text">treasury bonds</p>
-            <input class="parameter-box" type="number" name="bond-units" id="bond-units" value="100" min="0.0" max="100000000" step="1">
+            <p class="parameter-subtext">$1000 face value</p>
+            <input class="parameter-box" type="number" name="bond-units" id="bond-units" value="1" min="0.0" max="100000000" step="1">
+        </div>
+        <div>
+            <p class="parameter-text">interest rate</p>
+            <p class="parameter-subtext">one year (starting)</p>
+            <input class="parameter-box" type="number" name="interest-rate" id="interest-rate" value="0.02" min="0.0" max="25.0" step="0.01">
+        </div>
+        <div>
+            <p class="parameter-text">interest sigma</p>
+            <input class="parameter-box" type="number" name="interest-sigma" id="interest-sigma" value="0.0" min="0.0" max="10.0" step="0.01">
         </div>
         <div>
             <p class="parameter-text">spdr units</p>
@@ -75,38 +85,34 @@
             <input class="parameter-box" type="number" name="spdr-sigma" id="spdr-sigma" value="0.20" min="0.0" max="10.0" step="0.01">
         </div>
         <div>
+            <p class="parameter-text">income</p>
+            <p class="parameter-subtext">per annum</p>
+            <input class="parameter-box" type="number" name="income" id="income" value="50000" min="0" max="1000000" step="1">
+        </div>
+        <div>
+            <p class="parameter-text">social security</p>
+            <p class="parameter-subtext">per annum (from 67)</p>
+            <input class="parameter-box" type="number" name="social-security" id="social-security" value="25000" min="0" max="100000" step="1">
+        </div>
+        <div>
+            <p class="parameter-text">expenditure</p>
+            <p class="parameter-subtext">per annum (starting)</p>
+            <input class="parameter-box" type="number" name="expenditure" id="expenditure" value="35000" min="0" max="1000000" step="1">
+        </div>
+        <div>
+            <p class="parameter-text">healthcare</p>
+            <p class="parameter-subtext">per annum (until 65)</p>
+            <input class="parameter-box" type="number" name="healthcare" id="healthcare" value="7500" min="0" max="100000" step="1">
+        </div>
+        <div>
             <p class="parameter-text">inflation rate</p>
             <p class="parameter-subtext">starting point</p>
-            <input class="parameter-box" type="number" name="inflation-rate" id="inflation-rate" value="2.0" min="0.0" max="25.0" step="0.01">
+            <input class="parameter-box" type="number" name="inflation-rate" id="inflation-rate" value="0.02" min="0.0" max="25.0" step="0.01">
         </div>
         <div>
             <p class="parameter-text">inflation sigma</p>
             <p class="parameter-subtext">per annum volatility</p>
             <input class="parameter-box" type="number" name="inflation-sigma" id="inflation-sigma" value="0.0" min="0.0" max="10.0" step="0.01">
-        </div>
-        <div>
-            <p class="parameter-text">interest rate</p>
-            <p class="parameter-subtext">starting point</p>
-            <input class="parameter-box" type="number" name="interest-rate" id="interest-rate" value="2.0" min="0.0" max="25.0" step="0.01">
-        </div>
-        <div>
-            <p class="parameter-text">interest sigma</p>
-            <input class="parameter-box" type="number" name="interest-sigma" id="interest-sigma" value="0.0" min="0.0" max="10.0" step="0.01">
-        </div>
-        <div>
-            <p class="parameter-text">social security</p>
-            <p class="parameter-subtext">per annum (from 67)</p>
-            <input class="parameter-box" type="number" name="social-security" id="social-security" value="30000" min="0" max="100000" step="1">
-        </div>
-        <div>
-            <p class="parameter-text">healthcare</p>
-            <p class="parameter-subtext">per annum (until 65)</p>
-            <input class="parameter-box" type="number" name="healthcare" id="healthcare" value="5000" min="0" max="100000" step="1">
-        </div>
-        <div>
-            <p class="parameter-text">expenditure</p>
-            <p class="parameter-subtext">per annum (starting)</p>
-            <input class="parameter-box" type="number" name="expenditure" id="expenditure" value="40000" min="0" max="1000000" step="1">
         </div>
     </div>
 

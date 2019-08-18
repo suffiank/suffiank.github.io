@@ -51,10 +51,18 @@ function simulateRandomWalk() {
     // pull input parameters from page
     let age0 = parseInt(document.getElementById("start-age").value);
     let age1 = age0 + (parseInt(document.getElementById("end-year").value)-2019);
-    let initial_cash = document.getElementById("start-cash").value;
+    let cash = parseFloat(document.getElementById("start-cash").value);
+
+    let income = parseFloat(document.getElementById("income").value);
+    let expenses = parseFloat(document.getElementById("expenditure").value);
+    let healthcare = parseFloat(document.getElementById("healthcare").value);
+    let socialsecurity = parseFloat(document.getElementById("social-security").value);
+
+    let bond_units = parseFloat(document.getElementById("bond-units").value);
+    let interest = parseFloat(document.getElementById("interest-rate").value);
 
     const simulation_step = parseFloat( document.getElementById("mc-step").value)/365.0;
-    const recording_step =  parseFloat(document.getElementById("record-step").value)/365.0;
+    const recording_step =  (age1-age0)/50.0 * 10.0/365.0;
 
     // all units per annum
     let step = simulation_step;
@@ -68,6 +76,7 @@ function simulateRandomWalk() {
 
     let today = new Date().getTime();
     let lastRecordedAt = -1e5;
+    let dead = false;
 
     let data = [];
     for (let i = 0; i < nsteps; i++) {
@@ -78,16 +87,30 @@ function simulateRandomWalk() {
         if (spdr_price < 0.0) spdr_price = 0.0;
 
         let time = i*step;
+        let age = age0 + time;
+
         if (time - lastRecordedAt > recording_step) {
 
             var point = {
                 time: new Date(today + 365*24*3600*1000*time),
-                value: spdr_units*spdr_price.toFixed(0)
+                cash: cash,
+                equity_value: spdr_units*spdr_price.toFixed(0),
+                bond_value: bond_units*1000.0, // inaccurate
             }
+            point.value = point.cash + point.equity_value + point.bond_value;
+            if (point.value <= 0.0) dead = true;
+            if (dead) point.value = 0.0;
             data.push(point);
 
             lastRecordedAt = time;
         }
+
+        cash += income * step;
+        cash += age > 67? socialsecurity*step : 0.0;
+        cash += interest*bond_units*1000.0 * step;
+
+        cash -= expenses * step;
+        cash -= age < 65? healthcare*step : 0.0;
     }
 
     return data;
@@ -107,6 +130,7 @@ function refreshGraph(data) {
             data: value_data[i],
             borderColor: i == 0? 'red' : (i == 1? 'yellow' : 'green'),
             backgroundColor: i == 0? '#44000077' : (i == 1? '#44440077' : '#00440077'),
+            pointRadius: 0,
             lineTension: 0,
         });
     }
@@ -139,9 +163,8 @@ function refreshGraph(data) {
                     yAxes: [{
                         ticks: {
                             beginAtZero: true,
-                            callback: function(value, index, values) {
-                                return "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                            }
+                            callback: (value, index, values) =>
+                                "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                         }
                     }]
                 },
@@ -161,6 +184,7 @@ var table;
 function refreshTable(data) {
 
     let startAge = parseInt(document.getElementById("start-age").value);
+    const printStep = parseFloat( document.getElementById("print-step").value)/365.0;
 
     let time_data = data[0].map(a => a.time);
     let value_data = data.map(trial => trial.map(b => b.value));
@@ -185,19 +209,26 @@ function refreshTable(data) {
 
     // define row data
     var format = { year: 'numeric', month: '2-digit' };
+    let lastPrintedAt = -1e5;
 
     let rows = [];
-    for (let time = 0; time < time_data.length; time++) {
+    for (let i = 0; i < time_data.length; i++) {
+    
+        let relativeTime = (time_data[i].getTime() - time_data[0].getTime())
+            /(1000*3600*24*365);
 
-        let row = {id: time, date: time_data[time].toLocaleDateString("en-US", format)};
-        let msPassed = time_data[time].getTime() - time_data[0].getTime();
-        let yearsPassed = msPassed/(1000*3600*24*365);
-        row.age = Math.floor(startAge + yearsPassed);
+        if (relativeTime - lastPrintedAt > printStep) {
 
-        for (let trial = 0; trial < data.length; trial++) {
-            row[`value${trial}`] = parseFloat(value_data[trial][time]);
+            let row = {id: rows.length, date: time_data[i].toLocaleDateString("en-US", format)};
+            row.age = Math.floor(startAge + relativeTime);
+
+            for (let trial = 0; trial < data.length; trial++) {
+                row[`value${trial}`] = parseFloat(value_data[trial][i]);
+            }
+
+            rows.push(row);
+            lastPrintedAt = relativeTime;
         }
-        rows.push(row);
     }
 
     // display table
