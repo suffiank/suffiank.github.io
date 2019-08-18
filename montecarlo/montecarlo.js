@@ -188,21 +188,64 @@ function refreshTable(data) {
 
     let time_data = data[0].map(a => a.time);
     let value_data = data.map(trial => trial.map(b => b.value));
-
+    let cash_data = data.map(trial => trial.map(b => b.cash));
+    let bond_data = data.map(trial => trial.map(b => b.bond_value));
+    let equity_data = data.map(trial => trial.map(b => b.equity_value));
+    
     // define fields
     let fields = [];
-    fields.push({title: "Date", field: "date", width: 80, align: 'center'});
-    fields.push({title: "Age", field: "age", width: 65, align: 'center'});
+    fields.push({title: "Date", field: "date", width: 80, align: 'center', headerSort: false});
+    fields.push({title: "Age", field: "age", width: 65, align: 'center', headerSort: false});
     for (let trial = 0; trial < data.length; trial++) {
 
-        let percentile = Math.floor(100.0*(trial+1)/(data.length+1)).toString() + "th %";
+        if (trial == 1) continue;
+
+        let percentile = Math.floor(100.0*(trial+1)/(data.length+1)).toString() + "th";
         fields.push({
-            title:`Value (${percentile})`,
-            field:`value${trial}`, 
-            align:"right", 
-            width: 150,
-            formatter:"money", 
-            formatterParams: {symbol: "$"}
+
+            title: `${percentile} percentile`,
+            columns:[{
+                title:`Value`,
+                field:`value${trial}`, 
+                align:"right", 
+                width: 120,
+                // formatter:"money", 
+                // formatterParams: {symbol: "$"},
+                headerSort: false,
+                formatter: function(cell, formatterParams) {
+
+                    let color = trial == 0? '#990000' : (trial == 1? '#999900' : '#009900');
+                    let money = parseFloat(cell.getValue()).toFixed(2);
+                    return `<span style='color:${color};'>$` +  money + "</span>";
+                }
+            },
+            {
+                title:`Cash`,
+                field:`cash${trial}`, 
+                align:"right", 
+                width: 120,
+                formatter:"money", 
+                formatterParams: {symbol: "$"},
+                headerSort:false,
+            },
+            {
+                title:`Bonds`,
+                field:`bonds${trial}`, 
+                align:"right", 
+                width: 120,
+                formatter:"money", 
+                formatterParams: {symbol: "$"},
+                headerSort:false
+            },
+            {
+                title:`Equity`,
+                field:`equity${trial}`, 
+                align:"right", 
+                width: 120,
+                formatter:"money", 
+                formatterParams: {symbol: "$"},
+                headerSort:false
+            }]
         });
     }
     fields.push({title: "Comments", field: "comment", align: 'left'});
@@ -223,6 +266,11 @@ function refreshTable(data) {
             row.age = Math.floor(startAge + relativeTime);
 
             for (let trial = 0; trial < data.length; trial++) {
+                if (trial == 1) continue;
+                
+                row[`cash${trial}`] = parseFloat(cash_data[trial][i]);
+                row[`bonds${trial}`] = parseFloat(bond_data[trial][i]);
+                row[`equity${trial}`] = parseFloat(equity_data[trial][i]);
                 row[`value${trial}`] = parseFloat(value_data[trial][i]);
             }
 
