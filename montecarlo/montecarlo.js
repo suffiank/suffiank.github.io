@@ -14,7 +14,7 @@ function onResize() {
 function refreshSimulation() {
    
     // collect 'trials' number of simulations
-    let ntrials = document.getElementById("trials").value;
+    let ntrials = Math.floor(document.getElementById("trials").value);
     let data = []
     for (let i = 0; i < ntrials; i++) {
         data.push(simulateRandomWalk());
@@ -173,13 +173,15 @@ function refreshTable(data) {
 
         let percentile = Math.floor(100.0*(trial+1)/(data.length+1)).toString() + "th %";
         fields.push({
-            title:`Value (${percentile}tile)`,
+            title:`Value (${percentile})`,
             field:`value${trial}`, 
             align:"right", 
+            width: 150,
             formatter:"money", 
             formatterParams: {symbol: "$"}
         });
     }
+    fields.push({title: "Comments", field: "comment", align: 'left'});
 
     // define row data
     var format = { year: 'numeric', month: '2-digit' };
