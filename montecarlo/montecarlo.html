@@ -20,6 +20,13 @@
             Monte Carlo<br>Simulator
         </div>
         <div>
+            <input class="simulate-button" type="button" onclick="refreshSimulation()" name="simulate" id="simulate" value="simulate">
+        </div>
+        <div>
+            <p class="parameter-text">trials</p>
+            <input class="parameter-box" type="number" name="trials" id="trials" value="100">
+        </div>
+        <div>
             <p class="parameter-text">start age</p>
             <input class="parameter-box" type="number" name="start-age" id="start-age" value="25">
         </div>
@@ -30,6 +37,11 @@
         <div>
             <p class="parameter-text">start cash</p>
             <input class="parameter-box" type="number" name="start-cash" id="start-cash" value="10000">
+        </div>
+        <div>
+            <p class="parameter-text">SPDR sigma</p>
+            <p class="parameter-subtext">return volatility</p>
+            <input class="parameter-box" type="number" name="spdr-sigma" id="spdr-sigma" value="0.20">
         </div>
         <div>
             <p class="parameter-text">inflation rate</p>
@@ -62,13 +74,6 @@
             <p class="parameter-text">expenditure</p>
             <p class="parameter-subtext">per annum (starting)</p>
             <input class="parameter-box" type="number" name="expenditure" id="expenditure" value="40000">
-        </div>
-        <div>
-            <p class="parameter-text">trials</p>
-            <input class="parameter-box" type="number" name="trials" id="trials" value="100">
-        </div>
-        <div>
-            <input class="simulate-button" type="button" onclick="refreshSimulation()" name="simulate" id="simulate" value="simulate">
         </div>
     </div>
 

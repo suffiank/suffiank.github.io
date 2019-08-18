@@ -2,6 +2,11 @@
     --input-pane-width: 125px;
     --graph-pane-height: 45vh;
 }
+html, body {
+    height: 100%;
+    overflow: auto;
+    margin: 0;
+}
 * {
     margin: 0;
     padding: 0;
@@ -10,11 +15,13 @@
 }
 .input-pane {
     display: flex;
+    float: left;
     flex-direction: column;
     min-height: 100vh;
     width: var(--input-pane-width);
     background-color: #093145;
     color: white;
+    overflow: auto;
 }
 .page-title { 
     margin-top: 10px;
