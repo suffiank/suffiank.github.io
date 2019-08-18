@@ -3,31 +3,47 @@
 
 function onPageLoad() {
 
+    onResize();
     refreshSimulation();
+}
+
+function onResize() {
+
 }
 
 function refreshSimulation() {
    
+    // collect 'trials' number of simulations
     let ntrials = document.getElementById("trials").value;
-
     let data = []
     for (let i = 0; i < ntrials; i++) {
         data.push(simulateRandomWalk());
     }
 
+    // sort trials by survival and time-average fair value
+    // warning: assumes all time steps are equal
+    data = data.sort(
+        (s,t) => {
+
+            let savg = s.reduce((p,q) => p + q.value, 0)/s.length;
+            let tavg = t.reduce((p,q) => p + q.value, 0)/t.length;
+
+            let sfinal = s[s.length-1].value;
+            let tfinal = t[t.length-1].value;
+
+            if (sfinal <= 0.0) return -1;
+            if (tfinal <= 0.0) return -1;
+            return savg < tavg? -1 : 1;
+    });
+
     // retain only 25th, 50th, and 75th percentile
-    let index25 = Math.floor(0.25*data.length);
-    let index50 = Math.floor(0.50*data.length);
-    let index75 = Math.floor(0.75*data.length);
+    let samples = []
+    samples.push(data[Math.floor(0.25*data.length)]);
+    samples.push(data[Math.floor(0.50*data.length)]);
+    samples.push(data[Math.floor(0.75*data.length)]);
 
-    let pruned = []
-    data = data.sort((a,b) => parseFloat(a[a.length-1].value) < parseFloat(b[b.length-1].value)? -1:1);
-    pruned.push(data[index25]);
-    pruned.push(data[index50]);
-    pruned.push(data[index75]);
-
-    refreshGraph(pruned);
-    refreshTable(pruned);
+    refreshGraph(samples);
+    refreshTable(samples);
 }
 
 function simulateRandomWalk() {
@@ -144,16 +160,20 @@ function refreshGraph(data) {
 var table;
 function refreshTable(data) {
 
+    let startAge = parseInt(document.getElementById("start-age").value);
+
     let time_data = data[0].map(a => a.time);
     let value_data = data.map(trial => trial.map(b => b.value));
 
     // define fields
-    let fields = [{title: "Year", field: "year"}];
+    let fields = [];
+    fields.push({title: "Date", field: "date", width: 80, align: 'center'});
+    fields.push({title: "Age", field: "age", width: 65, align: 'center'});
     for (let trial = 0; trial < data.length; trial++) {
 
         let percentile = Math.floor(100.0*(trial+1)/(data.length+1)).toString() + "th %";
         fields.push({
-            title:`Value (${percentile}tile)`, 
+            title:`Value (${percentile}tile)`,
             field:`value${trial}`, 
             align:"right", 
             formatter:"money", 
@@ -162,9 +182,16 @@ function refreshTable(data) {
     }
 
     // define row data
+    var format = { year: 'numeric', month: '2-digit' };
+
     let rows = [];
     for (let time = 0; time < time_data.length; time++) {
-        let row = {id: time, year: time_data[time].toLocaleDateString("en-US")};
+
+        let row = {id: time, date: time_data[time].toLocaleDateString("en-US", format)};
+        let msPassed = time_data[time].getTime() - time_data[0].getTime();
+        let yearsPassed = msPassed/(1000*3600*24*365);
+        row.age = Math.floor(startAge + yearsPassed);
+
         for (let trial = 0; trial < data.length; trial++) {
             row[`value${trial}`] = parseFloat(value_data[trial][time]);
         }
