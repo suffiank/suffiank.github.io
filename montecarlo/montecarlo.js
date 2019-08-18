@@ -32,7 +32,7 @@ function refreshSimulation() {
             let tfinal = t[t.length-1].value;
 
             if (sfinal <= 0.0) return -1;
-            if (tfinal <= 0.0) return -1;
+            if (tfinal <= 0.0) return 1;
             return savg < tavg? -1 : 1;
     });
 
@@ -49,22 +49,22 @@ function refreshSimulation() {
 function simulateRandomWalk() {
 
     // pull input parameters from page
-    let age0 = document.getElementById("start-age").value;
-    let age1 = document.getElementById("end-age").value;
+    let age0 = parseInt(document.getElementById("start-age").value);
+    let age1 = age0 + (parseInt(document.getElementById("end-year").value)-2019);
     let initial_cash = document.getElementById("start-cash").value;
 
-    const simulation_step = 1.0/365.0;
-    const recording_step = 1.0/4.0;
+    const simulation_step = parseFloat( document.getElementById("mc-step").value)/365.0;
+    const recording_step =  parseFloat(document.getElementById("record-step").value)/365.0;
 
     // all units per annum
     let step = simulation_step;
     let nyears = age1-age0;
     let nsteps = Math.floor(nyears/step);
 
-    let spdr_stddev = 0.20;
-    let spdr_return = 0.05;
-    let spdr_price = 289.0;
-    let spdr_units = Math.floor(initial_cash/spdr_price);
+    let spdr_stddev = parseFloat(document.getElementById("spdr-sigma").value);
+    let spdr_return = parseFloat(document.getElementById("spdr-return").value);
+    let spdr_price = parseFloat(document.getElementById("spdr-price").value);;
+    let spdr_units = parseInt(document.getElementById("spdr-units").value);
 
     let today = new Date().getTime();
     let lastRecordedAt = -1e5;
