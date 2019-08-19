@@ -10,6 +10,7 @@
 
     <!-- monte carlo style sheet -->
     <link rel="stylesheet" type="text/css" href="montecarlo.css" />
+    <link rel="stylesheet" type="text/css" href="../lib/custom_range.css" />
 
 </head>
 <body onload="onPageLoad()">
@@ -43,7 +44,7 @@
         </div>
         <div>
             <p class="parameter-text">stop year</p>
-            <input class="parameter-box" type="number" name="end-year" id="end-year" value="2030" min="2020" max="2100" step="1">
+            <input class="parameter-box" type="number" name="end-year" id="end-year" value="2040" min="2020" max="2100" step="1">
         </div>
         <div>
             <p class="parameter-text">cash</p>
@@ -123,8 +124,12 @@
         </div>
     </div>
 
-    <!-- graph display --> 
+    <!-- cashflow display --> 
     <div class="cashflow-pane">
+        <div class="perentile-container">
+            <div class="percentile-text" id="percentile-text-id">percentile</div>
+            <input class="percentile-bar" type="range" name="percentile-bar" id="percentile-bar" oninput="onPercentileChange()" value="25" min="0" max="100" step="1">
+        </div>
         <div class="cashflow-table" id="cashflow-table-id"></div>
     </div>
 

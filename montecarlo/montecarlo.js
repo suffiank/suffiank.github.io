@@ -1,21 +1,28 @@
 
 "use strict";
 
+var data;
 function onPageLoad() {
 
-    onResize();
     refreshSimulation();
 }
 
-function onResize() {
+function onPercentileChange() {
 
+    if (typeof data === 'undefined') {
+        refreshSimulation();
+    }
+    else {
+        refreshGraph();
+        refreshTable();
+    }
 }
 
 function refreshSimulation() {
    
     // collect 'trials' number of simulations
     let ntrials = Math.floor(document.getElementById("trials").value);
-    let data = []
+    data = []
     for (let i = 0; i < ntrials; i++) {
         data.push(simulateRandomWalk());
     }
@@ -36,14 +43,8 @@ function refreshSimulation() {
             return savg < tavg? -1 : 1;
     });
 
-    // retain only 25th, 50th, and 75th percentile
-    let samples = []
-    samples.push(data[Math.floor(0.25*data.length)]);
-    samples.push(data[Math.floor(0.50*data.length)]);
-    samples.push(data[Math.floor(0.75*data.length)]);
-
-    refreshGraph(samples);
-    refreshTable(samples);
+    refreshGraph();
+    refreshTable();
 }
 
 function simulateRandomWalk() {
@@ -78,7 +79,7 @@ function simulateRandomWalk() {
     let lastRecordedAt = -1e5;
     let dead = false;
 
-    let data = [];
+    let series = [];
     for (let i = 0; i < nsteps; i++) {
 
         let spdr_delta = spdr_stddev * Math.sqrt(step);
@@ -100,7 +101,7 @@ function simulateRandomWalk() {
             point.value = point.cash + point.equity_value + point.bond_value;
             if (point.value <= 0.0) dead = true;
             if (dead) point.value = 0.0;
-            data.push(point);
+            series.push(point);
 
             lastRecordedAt = time;
         }
@@ -113,27 +114,28 @@ function simulateRandomWalk() {
         cash -= age < 65? healthcare*step : 0.0;
     }
 
-    return data;
+    return series;
 }
 
 var chart;
-function refreshGraph(data) {
+function refreshGraph() {
 
-    let time_data = data[0].map(a => a.time);
-    let value_data = data.map(trial => trial.map(b => b.value));
+    let percentile = parseInt(document.getElementById("percentile-bar").value);
+    let percentileIndex = percentile/100.0 * data.length;
+
+    let time_data = data[percentileIndex].map(a => a.time);
+    let value_data = data[percentileIndex].map(a => a.value);
 
     let datasets = [];
-    for (let i = 0; i < data.length; i++) {
-        datasets.push({
-            fill: true,
-            label: 'Market Value',
-            data: value_data[i],
-            borderColor: i == 0? 'red' : (i == 1? 'yellow' : 'green'),
-            backgroundColor: i == 0? '#44000077' : (i == 1? '#44440077' : '#00440077'),
-            pointRadius: 0,
-            lineTension: 0,
-        });
-    }
+    datasets.push({
+        fill: true,
+        label: 'Market Value',
+        data: value_data,
+        borderColor: 'green',
+        backgroundColor: '#00440077',
+        pointRadius: 0,
+        lineTension: 0,
+    });
 
     const data_feed = {
         labels: time_data,
@@ -181,74 +183,65 @@ function refreshGraph(data) {
 }
 
 var table;
-function refreshTable(data) {
+function refreshTable() {
 
     let startAge = parseInt(document.getElementById("start-age").value);
     const printStep = parseFloat( document.getElementById("print-step").value)/365.0;
 
-    let time_data = data[0].map(a => a.time);
-    let value_data = data.map(trial => trial.map(b => b.value));
-    let cash_data = data.map(trial => trial.map(b => b.cash));
-    let bond_data = data.map(trial => trial.map(b => b.bond_value));
-    let equity_data = data.map(trial => trial.map(b => b.equity_value));
+    let percentile = parseInt(document.getElementById("percentile-bar").value);
+    let percentileIndex = percentile/100.0 * data.length;
+
+    let time_data = data[percentileIndex].map(a => a.time);
+    let value_data = data[percentileIndex].map(a => a.value);
+    let cash_data = data[percentileIndex].map(a => a.cash);
+    let bond_data = data[percentileIndex].map(a => a.bond_value);
+    let equity_data = data[percentileIndex].map(a => a.equity_value);
     
     // define fields
     let fields = [];
-    fields.push({title: "Date", field: "date", width: 80, align: 'center', headerSort: false});
-    fields.push({title: "Age", field: "age", width: 65, align: 'center', headerSort: false});
-    for (let trial = 0; trial < data.length; trial++) {
+    fields.push({title: "Date", field: "date", width: 75, align: 'center', headerSort: false});
+    fields.push({title: "Age", field: "age", width: 60, align: 'center', headerSort: false});
+    fields.push({
 
-        if (trial == 1) continue;
-
-        let percentile = Math.floor(100.0*(trial+1)/(data.length+1)).toString() + "th";
-        fields.push({
-
-            title: `${percentile} percentile`,
-            columns:[{
-                title:`Value`,
-                field:`value${trial}`, 
-                align:"right", 
-                width: 120,
-                // formatter:"money", 
-                // formatterParams: {symbol: "$"},
-                headerSort: false,
-                formatter: function(cell, formatterParams) {
-
-                    let color = trial == 0? '#990000' : (trial == 1? '#999900' : '#009900');
-                    let money = parseFloat(cell.getValue()).toFixed(2);
-                    return `<span style='color:${color};'>$` +  money + "</span>";
-                }
-            },
-            {
-                title:`Cash`,
-                field:`cash${trial}`, 
-                align:"right", 
-                width: 120,
-                formatter:"money", 
-                formatterParams: {symbol: "$"},
-                headerSort:false,
-            },
-            {
-                title:`Bonds`,
-                field:`bonds${trial}`, 
-                align:"right", 
-                width: 120,
-                formatter:"money", 
-                formatterParams: {symbol: "$"},
-                headerSort:false
-            },
-            {
-                title:`Equity`,
-                field:`equity${trial}`, 
-                align:"right", 
-                width: 120,
-                formatter:"money", 
-                formatterParams: {symbol: "$"},
-                headerSort:false
-            }]
-        });
-    }
-    fields.push({title: "Comments", field: "comment", align: 'left'});
+        title: `${percentile}th percentile`,
+        columns:[{
+            title:`Value`,
+            field:`value`, 
+            align:"right", 
+            width: 120,
+            formatter:"money", 
+            formatterParams: {symbol: "$"},
+            headerSort: false,
+        },
+        {
+            title:`Cash`,
+            field:`cash`, 
+            align:"right", 
+            width: 120,
+            formatter:"money", 
+            formatterParams: {symbol: "$"},
+            headerSort:false,
+        },
+        {
+            title:`Bonds`,
+            field:`bonds`, 
+            align:"right", 
+            width: 120,
+            formatter:"money", 
+            formatterParams: {symbol: "$"},
+            headerSort:false
+        },
+        {
+            title:`Equity`,
+            field:`equity`, 
+            align:"right", 
+            width: 120,
+            formatter:"money", 
+            formatterParams: {symbol: "$"},
+            headerSort:false
+        }]
+    });
+    fields.push({title: "Comments", field: "comment", align: 'left', headerSort: false, widthGrow: 1});
 
     // define row data
     var format = { year: 'numeric', month: '2-digit' };
@@ -264,15 +257,10 @@ function refreshTable(data) {
 
             let row = {id: rows.length, date: time_data[i].toLocaleDateString("en-US", format)};
             row.age = Math.floor(startAge + relativeTime);
-
-            for (let trial = 0; trial < data.length; trial++) {
-                if (trial == 1) continue;
-                
-                row[`cash${trial}`] = parseFloat(cash_data[trial][i]);
-                row[`bonds${trial}`] = parseFloat(bond_data[trial][i]);
-                row[`equity${trial}`] = parseFloat(equity_data[trial][i]);
-                row[`value${trial}`] = parseFloat(value_data[trial][i]);
-            }
+            row[`cash`] = parseFloat(cash_data[i]);
+            row[`bonds`] = parseFloat(bond_data[i]);
+            row[`equity`] = parseFloat(equity_data[i]);
+            row[`value`] = parseFloat(value_data[i]);
 
             rows.push(row);
             lastPrintedAt = relativeTime;

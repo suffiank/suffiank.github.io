@@ -1,17 +1,19 @@
 :root {
     --input-pane-width: 150px;
     --graph-pane-height: 45vh;
-}
-html, body {
-    height: 100%;
-    overflow: auto;
-    margin: 0;
+    --percentile-scroll-height: 20px;
+    --percentile-text-width: 100px;
 }
 * {
     margin: 0;
     padding: 0;
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     font-size: 1.025em;
+}
+html, body {
+    height: 100%;
+    overflow: auto;
+    margin: 0;
 }
 .input-pane {
     display: flex;
@@ -62,20 +64,50 @@ html, body {
     position: relative;
     height: var(--graph-pane-height);
     width: calc(100vw - var(--input-pane-width) - 5px);
+    z-index: 2;
 }
 .cashflow-pane {
     display: flex;
     position: absolute;
+    flex-direction: column;
     top: var(--graph-pane-height);
     left: var(--input-pane-width);
-    min-height: calc(100vh - var(--graph-pane-height));
-    width: calc(100vw - var(--input-pane-width) );
+    height: calc(100vh - var(--graph-pane-height));
+    width: calc(100vw - var(--input-pane-width));
     background-color: white;
-    color: #107896;
-    box-shadow: 0 -1px 0 #000000;
+    color: #555555;
+    overflow: hidden;
+}
+.percentile-container {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    height: var(--percentile-scroll-height);
+    width: calc(100vw - var(--input-pane-width));
+    z-index: 1;
+
+}
+.percentile-text {
+    height: var(--percentile-scroll-height);
+    width: var(--percentile-text-width);
+    font-size: calc( 0.8*var(--percentile-scroll-height) );
+    text-align: center;
+    z-index: 1;
+}
+.percentile-bar {
+    position: absolute;
+    top: 0px;
+    left: var(--percentile-text-width);
+    height: var(--percentile-scroll-height);
+    width: calc(100vw - var(--input-pane-width) - var(--percentile-text-width) - 5px);
+    z-index: 1;
 }
 .cashflow-table {
     position: relative;
-    height: calc(100vh - var(--graph-pane-height) - 3px);
+    height: calc(100vh - var(--graph-pane-height) - var(--percentile-scroll-height));
     width: calc(100vw - var(--input-pane-width));
+    z-index: 2;
+}
+.tabulator .tabulator-header .tabulator-col {
+    text-align:center;
 }
