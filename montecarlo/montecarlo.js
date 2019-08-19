@@ -1,23 +1,21 @@
 
 "use strict";
 
-var data;
 function onPageLoad() {
 
     refreshSimulation();
+
+    refreshGraph();
+    refreshTable();
 }
 
 function onPercentileChange() {
 
-    if (typeof data === 'undefined') {
-        refreshSimulation();
-    }
-    else {
-        refreshGraph();
-        refreshTable();
-    }
+    refreshGraph();
+    refreshTable();
 }
 
+var data;
 function refreshSimulation() {
    
     // collect 'trials' number of simulations
@@ -42,9 +40,6 @@ function refreshSimulation() {
             if (tfinal <= 0.0) return 1;
             return savg < tavg? -1 : 1;
     });
-
-    refreshGraph();
-    refreshTable();
 }
 
 function simulateRandomWalk() {
@@ -125,6 +120,9 @@ function refreshGraph() {
 
     let time_data = data[percentileIndex].map(a => a.time);
     let value_data = data[percentileIndex].map(a => a.value);
+    let cash_data = data[percentileIndex].map(a => a.cash);
+    let bond_data = data[percentileIndex].map(a => a.bond_value);
+    let equity_data = data[percentileIndex].map(a => a.equity_value);
 
     let datasets = [];
     datasets.push({
