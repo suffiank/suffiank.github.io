@@ -15,6 +15,11 @@ function onPercentileChange() {
     refreshTable();
 }
 
+function onPercentileInput() {
+
+    refreshTable();
+}
+
 var data;
 function refreshSimulation() {
    
@@ -44,18 +49,22 @@ function refreshSimulation() {
 
 function simulateRandomWalk() {
 
-    // pull input parameters from page
+    // pull parameters from input settings
     let age0 = parseInt(document.getElementById("start-age").value);
     let age1 = age0 + (parseInt(document.getElementById("end-year").value)-2019);
     let cash = parseFloat(document.getElementById("start-cash").value);
+    let max_cash = parseFloat(document.getElementById("max-cash").value);
 
     let income = parseFloat(document.getElementById("income").value);
     let expenses = parseFloat(document.getElementById("expenditure").value);
     let healthcare = parseFloat(document.getElementById("healthcare").value);
     let socialsecurity = parseFloat(document.getElementById("social-security").value);
+    let inflation = parseFloat(document.getElementById("inflation-rate").value);    
 
     let bond_units = parseFloat(document.getElementById("bond-units").value);
+    let bond_duration = parseFloat(document.getElementById("bond-duration").value);
     let interest = parseFloat(document.getElementById("interest-rate").value);
+    let interest_sigma = parseFloat(document.getElementById("interest-sigma").value);
 
     const simulation_step = parseFloat( document.getElementById("mc-step").value)/365.0;
     const recording_step =  (age1-age0)/50.0 * 10.0/365.0;
@@ -77,13 +86,30 @@ function simulateRandomWalk() {
     let series = [];
     for (let i = 0; i < nsteps; i++) {
 
+        // random walk equity
         let spdr_delta = spdr_stddev * Math.sqrt(step);
         spdr_delta *= (Math.random() < 0.5? -1.0 : 1.0);
         spdr_price *= 1.0 + step*spdr_return + spdr_delta;
         if (spdr_price < 0.0) spdr_price = 0.0;
 
+        // random walk interest
+        let interest_delta = interest_sigma * Math.sqrt(step);
+        interest_delta *= (Math.random() < 0.5? -1.0 : 1.0);
+        interest *= 1.0 + interest_delta;
+        if (interest < 0.0) interest = 0.0;
+
         let time = i*step;
         let age = age0 + time;
+
+        cash += income * step;
+        cash += age > 67? socialsecurity*step : 0.0;
+        cash += interest*bond_units*1000.0 * step;
+
+        cash -= expenses * step;
+        cash -= age < 65? healthcare*step : 0.0;
+
+        income *= (1.0 + inflation*step);
+        expenses *= (1.0 + inflation*step);
 
         if (time - lastRecordedAt > recording_step) {
 
@@ -92,6 +118,7 @@ function simulateRandomWalk() {
                 cash: cash,
                 equity_value: spdr_units*spdr_price.toFixed(0),
                 bond_value: bond_units*1000.0, // inaccurate
+                interest_rate: interest.toFixed(4)
             }
             point.value = point.cash + point.equity_value + point.bond_value;
             if (point.value <= 0.0) dead = true;
@@ -100,13 +127,6 @@ function simulateRandomWalk() {
 
             lastRecordedAt = time;
         }
-
-        cash += income * step;
-        cash += age > 67? socialsecurity*step : 0.0;
-        cash += interest*bond_units*1000.0 * step;
-
-        cash -= expenses * step;
-        cash -= age < 65? healthcare*step : 0.0;
     }
 
     return series;
@@ -115,6 +135,7 @@ function simulateRandomWalk() {
 var chart;
 function refreshGraph() {
 
+    // extract Monte Carlo simulation for requested %-tile
     let percentile = parseInt(document.getElementById("percentile-bar").value);
     let percentileIndex = percentile/100.0 * data.length;
 
@@ -186,6 +207,7 @@ function refreshTable() {
     let startAge = parseInt(document.getElementById("start-age").value);
     const printStep = parseFloat( document.getElementById("print-step").value)/365.0;
 
+    // extract Monte Carlo simulation for requested %-tile
     let percentile = parseInt(document.getElementById("percentile-bar").value);
     let percentileIndex = percentile/100.0 * data.length;
 
@@ -194,51 +216,40 @@ function refreshTable() {
     let cash_data = data[percentileIndex].map(a => a.cash);
     let bond_data = data[percentileIndex].map(a => a.bond_value);
     let equity_data = data[percentileIndex].map(a => a.equity_value);
+    let interest_data = data[percentileIndex].map(a => a.interest_rate);
     
     // define fields
     let fields = [];
-    fields.push({title: "Date", field: "date", width: 75, align: 'center', headerSort: false});
-    fields.push({title: "Age", field: "age", width: 60, align: 'center', headerSort: false});
-    fields.push({
+    fields.push({title: "Date", field: "date", width: 70, align: 'center', headerSort: false});
+    fields.push({title: "Age", field: "age", width: 55, align: 'center', headerSort: false});
 
-        title: `${percentile}th percentile`,
-        columns:[{
-            title:`Value`,
-            field:`value`, 
+    let moneyTitles = ["Fair Value", "Cash", "Bond Value", "Equity Value"];
+    let moneyFields = ['value', 'cash', 'bonds', 'equity']
+    let simulationColumns = [];
+    for (let i = 0; i < 4; i++) {
+        simulationColumns.push({
+            title: moneyTitles[i],
+            field: moneyFields[i], 
             align:"right", 
-            width: 120,
+            width: 110,
             formatter:"money", 
             formatterParams: {symbol: "$"},
             headerSort: false,
-        },
-        {
-            title:`Cash`,
-            field:`cash`, 
-            align:"right", 
-            width: 120,
-            formatter:"money", 
-            formatterParams: {symbol: "$"},
-            headerSort:false,
-        },
-        {
-            title:`Bonds`,
-            field:`bonds`, 
-            align:"right", 
-            width: 120,
-            formatter:"money", 
-            formatterParams: {symbol: "$"},
-            headerSort:false
-        },
-        {
-            title:`Equity`,
-            field:`equity`, 
-            align:"right", 
-            width: 120,
-            formatter:"money", 
-            formatterParams: {symbol: "$"},
-            headerSort:false
-        }]
+        });
+    }
+    simulationColumns.push({
+        title: 'Interest',
+        field:`interest`, 
+        align:"right", 
+        width: 80,
+        formatter: (cell, formatterParams) => (100.0*cell.getValue()).toFixed(2) + "%",
+        headerSort: false,
+    })
+    fields.push({
+        title: `${percentile}th percentile`,
+        columns:simulationColumns
     });
+
     fields.push({title: "Comments", field: "comment", align: 'left', headerSort: false, widthGrow: 1});
 
     // define row data
@@ -259,6 +270,7 @@ function refreshTable() {
             row[`bonds`] = parseFloat(bond_data[i]);
             row[`equity`] = parseFloat(equity_data[i]);
             row[`value`] = parseFloat(value_data[i]);
+            row[`interest`] = parseFloat(interest_data[i]);
 
             rows.push(row);
             lastPrintedAt = relativeTime;

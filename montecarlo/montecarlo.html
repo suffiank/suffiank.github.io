@@ -10,7 +10,7 @@
 
     <!-- monte carlo style sheet -->
     <link rel="stylesheet" type="text/css" href="montecarlo.css" />
-    <link rel="stylesheet" type="text/css" href="../lib/custom_range.css" />
+    <link rel="stylesheet" type="text/css" href="mc_rangebar.css" />
 
 </head>
 <body onload="onPageLoad()">
@@ -47,14 +47,23 @@
             <input class="parameter-box" type="number" name="end-year" id="end-year" value="2040" min="2020" max="2100" step="1">
         </div>
         <div>
-            <p class="parameter-text">cash</p>
-            <p class="parameter-subtext">starting point</p>
+            <p class="parameter-text">starting cash</p>
             <input class="parameter-box" type="number" name="start-cash" id="start-cash" value="15000" min="10" max="100000000">
+        </div>
+        <div>
+            <p class="parameter-text">maximum cash</p>
+            <p class="parameter-subtext">excess invested</p>
+            <input class="parameter-box" type="number" name="max-cash" id="max-cash" value="25000" min="10" max="100000000">
         </div>
         <div>
             <p class="parameter-text">treasury bonds</p>
             <p class="parameter-subtext">$1000 face value</p>
             <input class="parameter-box" type="number" name="bond-units" id="bond-units" value="1" min="0.0" max="100000000" step="1">
+        </div>
+        <div>
+            <p class="parameter-text">bond duration</p>
+            <p class="parameter-subtext">in years</p>
+            <input class="parameter-box" type="number" name="bond-duration" id="bond-duration" value="1.0" min="0.0" max="100.0" step="1">
         </div>
         <div>
             <p class="parameter-text">interest rate</p>
@@ -128,7 +137,7 @@
     <div class="cashflow-pane">
         <div class="perentile-container">
             <div class="percentile-text" id="percentile-text-id">percentile</div>
-            <input class="percentile-bar" type="range" name="percentile-bar" id="percentile-bar" oninput="onPercentileChange()" value="25" min="0" max="100" step="1">
+            <input class="percentile-bar" type="range" name="percentile-bar" id="percentile-bar" oninput="onPercentileInput()" onchange="onPercentileChange()" value="25" min="0" max="100" step="1">
         </div>
         <div class="cashflow-table" id="cashflow-table-id"></div>
     </div>
