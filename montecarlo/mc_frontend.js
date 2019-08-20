@@ -98,7 +98,7 @@ function refreshGraph() {
 
     // extract Monte Carlo simulation for requested %-tile
     let percentile = global.input.display.percentile;
-    let percentileIndex = Math.floor(percentile/100.0 * global.mctrials.length);
+    let percentileIndex = Math.floor(percentile/100.0*global.mctrials.length - 0.1);
     let walk = global.mctrials[percentileIndex];
 
     let datasets = [];
@@ -166,7 +166,7 @@ function refreshTable() {
 
     // extract Monte Carlo simulation for requested %-tile
     let percentile = global.input.display.percentile;
-    let percentileIndex = Math.floor(percentile/100.0 * global.mctrials.length - 0.1);
+    let percentileIndex = Math.floor(percentile/100.0*global.mctrials.length - 0.1);
     let walk = global.mctrials[percentileIndex];
 
     // define fields and their display settings
