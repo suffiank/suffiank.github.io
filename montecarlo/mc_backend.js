@@ -18,8 +18,8 @@ function refreshSimulation() {
     mctrials = mctrials.sort(
         (s,t) => {
 
-            let savg = s.reduce((p,q) => p + q.value, 0)/s.length;
-            let tavg = t.reduce((p,q) => p + q.value, 0)/t.length;
+            let savg = s.reduce((p,q) => p + q.assetValue, 0)/s.length;
+            let tavg = t.reduce((p,q) => p + q.assetValue, 0)/t.length;
 
             let sfinal = s[s.length-1].assetValue;
             let tfinal = t[t.length-1].assetValue;
@@ -74,6 +74,7 @@ function simulateRandomWalk() {
             var point = {
                 time: new Date(today + 365*24*3600*1000*time),
                 cash: cash,
+                stockPrice: stock.price,
                 stockValue: stock.units*stock.price,
                 bondsValue: bonds.units*1000.0,
                 interestRate: interest,

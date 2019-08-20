@@ -84,7 +84,7 @@ function refreshInputs() {
     let delYears = input.stopYear - new Date().getFullYear();
     input.montecarlo.trials = getInput("trials", "int");
     input.montecarlo.timeStep = getInput("mc-step", "days");
-    input.montecarlo.recordStep = delYears/50.0 * 10.0/365.0;
+    input.montecarlo.recordStep = delYears/50.0 * 20.0/365.0;
     input.stopAge = input.startAge + delYears;
 
     input.display = {};
@@ -105,12 +105,12 @@ function refreshGraph() {
 
     let datasets = [];
     datasets.push({
-        fill: true,
-        label: 'Market Value',
-        data:  walk.map(a => a.assetValue),
-        yAxisID: 'dollars',
-        borderColor: 'green',
-        backgroundColor: '#00440077',
+        fill: false,
+        label: 'S&P 500',
+        data:  walk.map(a => a.stockPrice),
+        yAxisID: 'price',
+        borderColor: 'blue',
+        backgroundColor: '#00004477',
         pointRadius: 0,
         lineTension: 0,
     });
@@ -119,8 +119,18 @@ function refreshGraph() {
         label: 'Interest Rate',
         data:  walk.map(a => a.interestRate),
         yAxisID: 'rate',
-        borderColor: 'blue',
-        backgroundColor: '#00004477',
+        borderColor: '#9370DB',
+        backgroundColor: '#9370DB77',
+        pointRadius: 0,
+        lineTension: 0,
+    });
+    datasets.push({
+        fill: true,
+        label: 'Asset Value',
+        data:  walk.map(a => a.assetValue),
+        yAxisID: 'dollars',
+        borderColor: 'green',
+        backgroundColor: '#00440077',
         pointRadius: 0,
         lineTension: 0,
     });
@@ -130,17 +140,17 @@ function refreshGraph() {
         datasets: datasets
     }
 
+    let startAge = global.input.startAge;
+    let startYear = parseInt(new Date().getFullYear());
+
     if (typeof global.chart === 'undefined') {
 
         let canvas = document.getElementById('graph-canvas-id');
 
-        let float2dollar = (value, index, values) =>
-            "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-
         let options = {
             title: {
-                display: true,
-                text: 'Market Value',
+                display: false,
+                text: 'Market',
                 position: 'top'
             },
             maintainAspectRatio: false,
@@ -149,7 +159,7 @@ function refreshGraph() {
                     type: 'time',
                     time: {
                         unit: 'year'
-                    }
+                    },
                 }],
                 yAxes: [
                     {
@@ -157,7 +167,8 @@ function refreshGraph() {
                         position: 'left',
                         ticks: {
                             beginAtZero: true,
-                            callback: float2dollar
+                            callback: (value, index, values) =>
+                                "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                         },
                     },
                     {
@@ -165,13 +176,26 @@ function refreshGraph() {
                         position: 'right',
                         ticks: {
                             beginAtZero: true,              
-                            callback: (value, index, values) => (100.0*value).toFixed(2) + "%"
+                            callback: (value, index, values) => 
+                                (100.0*value).toFixed(2) + "%"
                         },
-                    }                    
+                        gridLines: {display: false}
+                    },
+                    {
+                        id: 'price',
+                        position: 'right',
+                        ticks: {
+                            beginAtZero: true,
+                            callback: (value, index, values) =>
+                                "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        },
+                        gridLines: {display: false}
+                    }    
                 ]
             },
             legend: {
-                display: false
+                display: true,
+                position: 'top'
             }
         };
 
@@ -182,6 +206,7 @@ function refreshGraph() {
         });
     }
     else {
+
         global.chart.data = data_feed;
         global.chart.update();
     }
