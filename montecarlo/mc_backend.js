@@ -66,39 +66,9 @@ function simulateRandomWalk() {
     let walk = [];
     for (let i = 0; i < nsteps; i++) {
 
-        // random walk equity
-        let step = input.stock.sigma * Math.sqrt(timeStep);
-        let delta = Math.random() < 0.5? -step : step;        
-
-        stock.price *= 1.0 + timeStep*input.stock.return + delta;
-        if (stock.price < 0.0) stock.price = 0.0;
-        stock.price = +(stock.price.toFixed(2));
-
-        // random walk interest
-        step = input.interest.sigma * Math.sqrt(timeStep);
-        delta = Math.random() < 0.5? -step : step;
-
-        interest *= 1.0 + delta;        
-        if (interest < 0.0) interest = 0.0;
-        interest = +(interest.toFixed(4));
-
         let time = i*timeStep;
         let age = input.startAge + time;
-
-        cash += income * timeStep;
-        cash += age > 67? input.socialsecurity*timeStep : 0.0;
-        cash += interest*bonds.units*1000.0*timeStep;
-
-        accruedInterest += interest*bonds.units*1000.0*timeStep;
-        accruedIncome += (income + interest*bonds.units*1000.0)*timeStep 
-        accruedExpense += expenses * timeStep;
-
-        cash -= expenses * timeStep;
-        cash -= age < 65? input.healthcare*timeStep : 0.0;
-
-        income *= 1.0 + inflation*timeStep;
-        expenses *= 1.0 + inflation*timeStep;
-
+        
         if (time - lastRecordedAt > input.montecarlo.recordStep) {
 
             var point = {
@@ -124,6 +94,36 @@ function simulateRandomWalk() {
             accruedExpense = 0.0;
             lastRecordedAt = time;
         }
+
+        // random walk equity
+        let step = input.stock.sigma * Math.sqrt(timeStep);
+        let delta = Math.random() < 0.5? -step : step;        
+
+        stock.price *= 1.0 + timeStep*input.stock.return + delta;
+        if (stock.price < 0.0) stock.price = 0.0;
+        stock.price = +(stock.price.toFixed(2));
+
+        // random walk interest
+        step = input.interest.sigma * Math.sqrt(timeStep);
+        delta = Math.random() < 0.5? -step : step;
+
+        interest *= 1.0 + delta;        
+        if (interest < 0.0) interest = 0.0;
+        interest = +(interest.toFixed(4));
+
+        cash += income * timeStep;
+        cash += age > 67? input.socialsecurity*timeStep : 0.0;
+        cash += interest*bonds.units*1000.0*timeStep;
+
+        accruedInterest += interest*bonds.units*1000.0*timeStep;
+        accruedIncome += (income + interest*bonds.units*1000.0)*timeStep 
+        accruedExpense += expenses * timeStep;
+
+        cash -= expenses * timeStep;
+        cash -= age < 65? input.healthcare*timeStep : 0.0;
+
+        income *= 1.0 + inflation*timeStep;
+        expenses *= 1.0 + inflation*timeStep;
     }
 
     return walk;

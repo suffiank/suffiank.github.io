@@ -242,7 +242,7 @@ function refreshTable() {
         accruedExpense += walk[i].expense;
 
         const printStep = global.input.display.printStep
-        if (relativeTime - lastPrintedAt > printStep) {
+        if (relativeTime - lastPrintedAt >= printStep) {
 
             let row = {id: rows.length, date: walk[i].time.toLocaleDateString("en-US", format)};
             row.age = Math.floor(global.input.startAge + relativeTime);
@@ -255,8 +255,11 @@ function refreshTable() {
             row[`interest`] = parseFloat(walk[i].interestRate);
             row[`inflation`] = parseFloat(walk[i].inflationRate);
 
-            rows.push(row);
+            rows.push(row);            
             lastPrintedAt = relativeTime;
+
+            accruedIncome = 0.0;
+            accruedExpense = 0.0;
         }
     }
 
