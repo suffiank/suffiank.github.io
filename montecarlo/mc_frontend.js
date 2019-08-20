@@ -200,6 +200,8 @@ function refreshTable() {
     walkColumns.push(withDefaults({title: 'Cash', field: 'cash'}));
     walkColumns.push(withDefaults({title: 'Bonds', field: 'bonds'}));
     walkColumns.push(withDefaults({title: 'Stock', field: 'stock'}));
+    walkColumns.push(withDefaults({title: 'Income', field: 'income'}));
+    walkColumns.push(withDefaults({title: 'Expense', field: 'expense'}));
 
     defaults = {
         align: 'right',
@@ -227,11 +229,17 @@ function refreshTable() {
     var format = { year: 'numeric', month: '2-digit' };
     let lastPrintedAt = -1e5;
 
+    let accruedIncome = 0.0;
+    let accruedExpense = 0.0;
+
     let rows = [];
     for (let i = 0; i < walk.length; i++) {
     
         let relativeTime = (walk[i].time.getTime() - walk[0].time.getTime())
             /(1000*3600*24*365);
+
+        accruedIncome += walk[i].income;
+        accruedExpense += walk[i].expense;
 
         const printStep = global.input.display.printStep
         if (relativeTime - lastPrintedAt > printStep) {
@@ -242,7 +250,10 @@ function refreshTable() {
             row[`bonds`] = parseFloat(walk[i].bondsValue);
             row[`stock`] = parseFloat(walk[i].stockValue);
             row[`value`] = parseFloat(walk[i].assetValue);
+            row[`income`] = accruedIncome;
+            row[`expense`] = accruedExpense;
             row[`interest`] = parseFloat(walk[i].interestRate);
+            row[`inflation`] = parseFloat(walk[i].inflationRate);
 
             rows.push(row);
             lastPrintedAt = relativeTime;

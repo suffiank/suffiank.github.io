@@ -48,6 +48,10 @@ function simulateRandomWalk() {
     let cash = input.cash;
     let income = input.income;
     let expenses = input.expenses;
+
+    let accruedInterest = 0.0;
+    let accruedIncome = 0.0;
+    let accruedExpense = 0.0;
     
     let stock = {};
     stock.price = input.stock.price;
@@ -85,6 +89,10 @@ function simulateRandomWalk() {
         cash += age > 67? input.socialsecurity*timeStep : 0.0;
         cash += interest*bonds.units*1000.0*timeStep;
 
+        accruedInterest += interest*bonds.units*1000.0*timeStep;
+        accruedIncome += (income + interest*bonds.units*1000.0)*timeStep 
+        accruedExpense += expenses * timeStep;
+
         cash -= expenses * timeStep;
         cash -= age < 65? input.healthcare*timeStep : 0.0;
 
@@ -99,6 +107,10 @@ function simulateRandomWalk() {
                 stockValue: stock.units*stock.price,
                 bondsValue: bonds.units*1000.0,
                 interestRate: interest,
+                inflationRate: inflation,
+                interestIncome: accruedInterest,
+                income: accruedIncome,
+                expense: accruedExpense,
             }
 
             point.assetValue = point.cash + point.stockValue + point.bondsValue;
@@ -107,6 +119,9 @@ function simulateRandomWalk() {
             if (dead) point.assetValue = 0.0;
             walk.push(point);
 
+            accruedInterest = 0.0;
+            accruedIncome = 0.0;
+            accruedExpense = 0.0;
             lastRecordedAt = time;
         }
     }
