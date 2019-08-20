@@ -1,0 +1,257 @@
+
+"use strict";
+
+var globalChart;
+var globalTable;
+
+var globalSimulationInputs;
+var globalSimulationWalks;
+
+function onPageLoad() {
+
+    onSimulate();
+}
+
+function onSimulate() {
+
+    refreshInputs();
+    refreshSimulation();
+
+    refreshGraph();
+    refreshTable();
+}
+
+function onPercentileChange() {
+
+    refreshGraph();
+    refreshTable();
+}
+
+function onPercentileInput() {
+
+    refreshTable();
+}
+
+function refreshInputs() {
+
+    let getInput = function (id, kind = "float") {
+        switch(kind) {
+            case "float":
+                return parseFloat(document.getElementById(id).value).toFixed(4);
+            case "int":
+                return parseInt(document.getElementById(id).value);
+            case "money":
+                return parseFloat(document.getElementById(id).value).toFixed(2);
+            case "days":
+                return parseFloat( document.getElementById(id).value)/365.0;
+        }
+
+        throw `Cannot fetch input ${id} of unknown kind '${kind}'`;
+    }
+
+    let input = {};
+    input.startAge = getInput("start-age", "int");
+    input.stopYear = getInput("stop-year", "int");
+
+    input.cash = getInput("start-cash", "money");
+    input.maxCash = getInput("max-cash", "money");
+
+    input.income = getInput("income", "money");
+    input.expenses = getInput("expenditure", "money");
+    input.healthcare = getInput("healthcare", "money");
+    input.socialsecurity = getInput("social-security", "money");
+
+    input.bonds = {};
+    input.bonds.units = getInput("bond-units", "int");
+    input.bonds.duration= getInput("bond-duration");
+
+    input.stock = {};
+    input.stock.price = getInput("spdr-price", "money");
+    input.stock.return = getInput("spdr-return");
+    input.stock.sigma = getInput("spdr-sigma");
+    input.stock.units = getInput("spdr-units", "int");
+
+    input.inflation = {};
+    input.inflation.rate = getInput("inflation-rate");
+    input.inflation.sigma = getInput("inflation-sigma");
+
+    input.interest = {};
+    input.interest.rate = getInput("interest-rate");
+    input.interest.sigma = getInput("interest-sigma");
+
+    input.strategy = "cash-balance";
+
+    input.montecarlo = {};
+    let delYears = input.stopYear - new Date().getFullYear();
+    input.montecarlo.trials = getInput("trials", "int");
+    input.montecarlo.timeStep = getInput("mc-step", "days");
+    input.montecarlo.recordStep = delYears/50.0 * 10.0/365.0;
+    input.stopAge = input.startAge + delYears;
+
+    input.display = {};
+    input.display.percentile = getInput("percentile-bar", "int");
+    input.display.printStep = getInput("print-step", "days");
+
+    globalSimulationInputs = input;
+}
+
+function refreshGraph() {
+
+    // extract Monte Carlo simulation for requested %-tile
+    let percentile = globalSimulationInputs.display.percentile;
+    let percentileIndex = percentile/100.0 * globalSimulationWalks.length;
+    let walk = globalSimulationWalks[percentileIndex];
+
+    let datasets = [];
+    datasets.push({
+        fill: true,
+        label: 'Market Value',
+        data:  walk.map(a => a.value),
+        borderColor: 'green',
+        backgroundColor: '#00440077',
+        pointRadius: 0,
+        lineTension: 0,
+    });
+
+    const data_feed = {
+        labels: walk.map(a => a.time),
+        datasets: datasets
+    }
+
+    if (typeof globalChart === 'undefined') {
+
+        let canvas = document.getElementById('graph-canvas-id');
+        globalChart = new Chart(canvas, {
+            type: 'line',
+            data: data_feed,
+            options: {
+                title: {
+                    display: true,
+                    text: 'Market Value',
+                    position: 'top'
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'year'
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            callback: (value, index, values) =>
+                                "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        }
+                    }]
+                },
+                legend: {
+                    display: false
+                }
+            }
+        });
+    }
+    else {
+        globalChart.data = data_feed;
+        globalChart.update();
+    }
+}
+
+function refreshTable() {
+
+    // extract Monte Carlo simulation for requested %-tile
+    let percentile = globalSimulationInputs.display.percentile;
+    let percentileIndex = percentile/100.0 * globalSimulationWalks.length;
+    let walk = globalSimulationWalks[percentileIndex];
+
+    // define fields and their display settings
+    let defaults;
+    let withDefaults = (x) => Object.assign(x, defaults);
+
+    defaults = {
+        align: 'center', 
+        headerSort: false
+    };
+
+    let fields = [];    
+    fields.push(withDefaults({title: "Date", field: "date", width: 70}));
+    fields.push(withDefaults({title: "Age", field: "age", width: 55}));
+
+    let walkColumns = [];
+
+    defaults = {
+        align: 'right', 
+        headerSort: false, 
+        width: 110, 
+        formatter: "money", 
+        formatterParams: {symbol: "$"}
+    }
+
+    walkColumns.push(withDefaults({title: 'Fair Value', field: 'value'}));
+    walkColumns.push(withDefaults({title: 'Cash', field: 'cash'}));
+    walkColumns.push(withDefaults({title: 'Bonds', field: 'bonds'}));
+    walkColumns.push(withDefaults({title: 'Stock', field: 'stock'}));
+
+    defaults = {
+        align: 'right',
+        headerSort: false,
+        width: 80,
+        formatter: (cell, formatterParams) => (100.0*cell.getValue()).toFixed(2) + "%",
+    }
+
+    walkColumns.push(withDefaults({title: 'Interest', field: 'interest'}));
+
+    fields.push({
+        title: `${percentile}th percentile`,
+        columns:walkColumns
+    });
+
+    fields.push({
+        title: "Comments", 
+        field: "comment", 
+        align: 'left', 
+        headerSort: false, 
+        widthGrow: 1
+    });
+
+    // define row data from walk data
+    var format = { year: 'numeric', month: '2-digit' };
+    let lastPrintedAt = -1e5;
+
+    let rows = [];
+    for (let i = 0; i < walk.length; i++) {
+    
+        let relativeTime = (walk[i].time.getTime() - walk[0].time.getTime())
+            /(1000*3600*24*365);
+
+        const printStep = globalSimulationInputs.display.printStep
+        if (relativeTime - lastPrintedAt > printStep) {
+
+            let row = {id: rows.length, date: walk[i].time.toLocaleDateString("en-US", format)};
+            row.age = Math.floor(globalSimulationInputs.startAge + relativeTime);
+            row[`cash`] = parseFloat(walk[i].cash);
+            row[`bonds`] = parseFloat(walk[i].bondValue);
+            row[`stock`] = parseFloat(walk[i].stockValue);
+            row[`value`] = parseFloat(walk[i].assetValue);
+            row[`interest`] = parseFloat(walk[i].interestRate);
+
+            rows.push(row);
+            lastPrintedAt = relativeTime;
+        }
+    }
+
+    // display table
+    if (typeof globalTable === 'undefined') {
+        globalTable = new Tabulator("#cashflow-table-id", {
+            data: rows, 
+            clipboard: true,
+            layout:"fitColumns",
+            columns:fields,
+        });
+    }
+    else {
+        globalTable.setColumns(fields);
+        globalTable.replaceData(rows);
+    }
+}
