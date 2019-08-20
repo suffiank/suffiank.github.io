@@ -11,6 +11,7 @@ function onPageLoad() {
 function onSimulate() {
 
     refreshInputs();
+    refreshPercentileText();
     refreshSimulation();
 
     refreshGraph();
@@ -19,14 +20,14 @@ function onSimulate() {
 
 function onPercentileChange() {
 
-    global.input.display.percentile = getInput("percentile-bar", "int");
+    refreshPercentileText();
     refreshGraph();
     refreshTable();
 }
 
 function onPercentileInput() {
 
-    global.input.display.percentile = getInput("percentile-bar", "int");
+    refreshPercentileText();
     refreshTable();
 }
 
@@ -44,6 +45,13 @@ function getInput(id, kind = "float") {
     }
 
     throw `Cannot fetch input ${id} of unknown kind '${kind}'`;
+}
+
+function refreshPercentileText() {
+
+    let percentile = getInput("percentile-bar", "int");
+    global.input.display.percentile = percentile;
+    document.getElementById("percentile-text-id").innerHTML = `${percentile}th percentile`;
 }
 
 function refreshInputs() {

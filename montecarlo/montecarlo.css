@@ -2,7 +2,7 @@
     --input-pane-width: 150px;
     --graph-pane-height: 45vh;
     --percentile-scroll-height: 20px;
-    --percentile-text-width: 85px;
+    --percentile-text-width: 120px;
 }
 * {
     margin: 0;
