@@ -1,11 +1,7 @@
 
 "use strict";
 
-var globalChart;
-var globalTable;
-
-var globalSimulationInputs;
-var globalSimulationWalks;
+var global = {};
 
 function onPageLoad() {
 
@@ -23,31 +19,34 @@ function onSimulate() {
 
 function onPercentileChange() {
 
+    global.input.display.percentile = getInput("percentile-bar", "int");
     refreshGraph();
     refreshTable();
 }
 
 function onPercentileInput() {
 
+    global.input.display.percentile = getInput("percentile-bar", "int");
     refreshTable();
 }
 
-function refreshInputs() {
+function getInput(id, kind = "float") {
 
-    let getInput = function (id, kind = "float") {
-        switch(kind) {
-            case "float":
-                return parseFloat(document.getElementById(id).value).toFixed(4);
-            case "int":
-                return parseInt(document.getElementById(id).value);
-            case "money":
-                return parseFloat(document.getElementById(id).value).toFixed(2);
-            case "days":
-                return parseFloat( document.getElementById(id).value)/365.0;
-        }
-
-        throw `Cannot fetch input ${id} of unknown kind '${kind}'`;
+    switch(kind) {
+        case "float":
+            return +(parseFloat(document.getElementById(id).value).toFixed(4));
+        case "int":
+            return parseInt(document.getElementById(id).value);
+        case "money":
+            return +(parseFloat(document.getElementById(id).value).toFixed(2));
+        case "days":
+            return parseFloat(document.getElementById(id).value)/365.0;
     }
+
+    throw `Cannot fetch input ${id} of unknown kind '${kind}'`;
+}
+
+function refreshInputs() {
 
     let input = {};
     input.startAge = getInput("start-age", "int");
@@ -92,21 +91,21 @@ function refreshInputs() {
     input.display.percentile = getInput("percentile-bar", "int");
     input.display.printStep = getInput("print-step", "days");
 
-    globalSimulationInputs = input;
+    global.input = input;
 }
 
 function refreshGraph() {
 
     // extract Monte Carlo simulation for requested %-tile
-    let percentile = globalSimulationInputs.display.percentile;
-    let percentileIndex = percentile/100.0 * globalSimulationWalks.length;
-    let walk = globalSimulationWalks[percentileIndex];
+    let percentile = global.input.display.percentile;
+    let percentileIndex = Math.floor(percentile/100.0 * global.mctrials.length);
+    let walk = global.mctrials[percentileIndex];
 
     let datasets = [];
     datasets.push({
         fill: true,
         label: 'Market Value',
-        data:  walk.map(a => a.value),
+        data:  walk.map(a => a.assetValue),
         borderColor: 'green',
         backgroundColor: '#00440077',
         pointRadius: 0,
@@ -118,52 +117,57 @@ function refreshGraph() {
         datasets: datasets
     }
 
-    if (typeof globalChart === 'undefined') {
+    if (typeof global.chart === 'undefined') {
 
         let canvas = document.getElementById('graph-canvas-id');
-        globalChart = new Chart(canvas, {
+
+        let float2dollar = (value, index, values) =>
+            "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+        let options = {
+            title: {
+                display: true,
+                text: 'Market Value',
+                position: 'top'
+            },
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{
+                    type: 'time',
+                    time: {
+                        unit: 'year'
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        callback: float2dollar
+                    }
+                }]
+            },
+            legend: {
+                display: false
+            }
+        };
+
+        global.chart = new Chart(canvas, {
             type: 'line',
             data: data_feed,
-            options: {
-                title: {
-                    display: true,
-                    text: 'Market Value',
-                    position: 'top'
-                },
-                maintainAspectRatio: false,
-                scales: {
-                    xAxes: [{
-                        type: 'time',
-                        time: {
-                            unit: 'year'
-                        }
-                    }],
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true,
-                            callback: (value, index, values) =>
-                                "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                    }]
-                },
-                legend: {
-                    display: false
-                }
-            }
+            options: options,
         });
     }
     else {
-        globalChart.data = data_feed;
-        globalChart.update();
+        global.chart.data = data_feed;
+        global.chart.update();
     }
 }
 
 function refreshTable() {
 
     // extract Monte Carlo simulation for requested %-tile
-    let percentile = globalSimulationInputs.display.percentile;
-    let percentileIndex = percentile/100.0 * globalSimulationWalks.length;
-    let walk = globalSimulationWalks[percentileIndex];
+    let percentile = global.input.display.percentile;
+    let percentileIndex = Math.floor(percentile/100.0 * global.mctrials.length - 0.1);
+    let walk = global.mctrials[percentileIndex];
 
     // define fields and their display settings
     let defaults;
@@ -225,13 +229,13 @@ function refreshTable() {
         let relativeTime = (walk[i].time.getTime() - walk[0].time.getTime())
             /(1000*3600*24*365);
 
-        const printStep = globalSimulationInputs.display.printStep
+        const printStep = global.input.display.printStep
         if (relativeTime - lastPrintedAt > printStep) {
 
             let row = {id: rows.length, date: walk[i].time.toLocaleDateString("en-US", format)};
-            row.age = Math.floor(globalSimulationInputs.startAge + relativeTime);
+            row.age = Math.floor(global.input.startAge + relativeTime);
             row[`cash`] = parseFloat(walk[i].cash);
-            row[`bonds`] = parseFloat(walk[i].bondValue);
+            row[`bonds`] = parseFloat(walk[i].bondsValue);
             row[`stock`] = parseFloat(walk[i].stockValue);
             row[`value`] = parseFloat(walk[i].assetValue);
             row[`interest`] = parseFloat(walk[i].interestRate);
@@ -242,8 +246,8 @@ function refreshTable() {
     }
 
     // display table
-    if (typeof globalTable === 'undefined') {
-        globalTable = new Tabulator("#cashflow-table-id", {
+    if (typeof global.table === 'undefined') {
+        global.table = new Tabulator("#cashflow-table-id", {
             data: rows, 
             clipboard: true,
             layout:"fitColumns",
@@ -251,7 +255,7 @@ function refreshTable() {
         });
     }
     else {
-        globalTable.setColumns(fields);
-        globalTable.replaceData(rows);
+        global.table.setColumns(fields);
+        global.table.replaceData(rows);
     }
 }
