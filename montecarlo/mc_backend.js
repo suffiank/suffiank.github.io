@@ -68,7 +68,7 @@ function simulateRandomWalk() {
 
         let time = i*timeStep;
         let age = input.startAge + time;
-        
+
         if (time - lastRecordedAt > input.montecarlo.recordStep) {
 
             var point = {
@@ -101,7 +101,6 @@ function simulateRandomWalk() {
 
         stock.price *= 1.0 + timeStep*input.stock.return + delta;
         if (stock.price < 0.0) stock.price = 0.0;
-        stock.price = +(stock.price.toFixed(2));
 
         // random walk interest
         step = input.interest.sigma * Math.sqrt(timeStep);
@@ -109,7 +108,6 @@ function simulateRandomWalk() {
 
         interest *= 1.0 + delta;        
         if (interest < 0.0) interest = 0.0;
-        interest = +(interest.toFixed(4));
 
         cash += income * timeStep;
         cash += age > 67? input.socialsecurity*timeStep : 0.0;

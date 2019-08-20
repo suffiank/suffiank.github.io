@@ -108,8 +108,19 @@ function refreshGraph() {
         fill: true,
         label: 'Market Value',
         data:  walk.map(a => a.assetValue),
+        yAxisID: 'dollars',
         borderColor: 'green',
         backgroundColor: '#00440077',
+        pointRadius: 0,
+        lineTension: 0,
+    });
+    datasets.push({
+        fill: false,
+        label: 'Interest Rate',
+        data:  walk.map(a => a.interestRate),
+        yAxisID: 'rate',
+        borderColor: 'blue',
+        backgroundColor: '#00004477',
         pointRadius: 0,
         lineTension: 0,
     });
@@ -140,12 +151,24 @@ function refreshGraph() {
                         unit: 'year'
                     }
                 }],
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        callback: float2dollar
-                    }
-                }]
+                yAxes: [
+                    {
+                        id: 'dollars',
+                        position: 'left',
+                        ticks: {
+                            beginAtZero: true,
+                            callback: float2dollar
+                        },
+                    },
+                    {
+                        id: 'rate',
+                        position: 'right',
+                        ticks: {
+                            beginAtZero: true,              
+                            callback: (value, index, values) => (100.0*value).toFixed(2) + "%"
+                        },
+                    }                    
+                ]
             },
             legend: {
                 display: false
