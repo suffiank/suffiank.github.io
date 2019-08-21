@@ -99,14 +99,21 @@ function refreshInputs() {
     input.market.securities['SPY'].sigma = getInput("spy-sigma");
 
     input.market.securities['UST'] = {};
-    input.market.securities['UST'].kind = "bond";    
-    input.market.securities['UST'].duration = getInput("bond-duration");
+    input.market.securities['UST'].kind = "bond";
+    input.market.securities['UST'].faceValue = 1000.00;
+    input.market.securities['UST'].coupon = getInput("bond-coupon", "money");
+    input.market.securities['UST'].frequency =  getInput("bond-frequency", "int");
+    input.market.securities['UST'].duration = getInput("bond-duration");    
 
     input.market.inflation = getInput("inflation-rate");
     input.market.inflationSigma = getInput("inflation-sigma");
 
     input.market.interest = getInput("interest-rate");
     input.market.interestSigma = getInput("interest-sigma");
+
+    input.market.vasicek = {}
+    input.market.vasicek.a = 0.01;
+    input.market.vasicek.b = 0.05;
 
     // Monte Carlo simulation parameters
     input.montecarlo = {};
@@ -291,7 +298,7 @@ function refreshTable() {
         formatterParams: {symbol: "$"}
     }
 
-    walkColumns.push(withDefaults({title: 'Fair Value', field: 'value'}));
+    walkColumns.push(withDefaults({title: 'Asset Value', field: 'value'}));
     walkColumns.push(withDefaults({title: 'Cash', field: 'cash'}));
     walkColumns.push(withDefaults({title: 'Bonds', field: 'bonds'}));
     walkColumns.push(withDefaults({title: 'Stock', field: 'stock'}));

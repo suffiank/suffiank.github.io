@@ -75,12 +75,14 @@ function simulateRandomWalk() {
 
         if (time - lastRecordedAt > input.montecarlo.recordStep) {
 
+            let bondValue = getBondValue(input.market.securities['UST'], interest);
+
             var point = {
                 time: new Date(today + 365*24*3600*1000*time),
                 cash: cash,
                 stockPrice: stock.price,
                 stockValue: stock.units*stock.price,
-                bondsValue: bonds.units*1000.0,
+                bondsValue: bonds.units*bondValue,
                 interestRate: interest,
                 inflationRate: inflation,
                 interestIncome: accruedInterest,
@@ -111,7 +113,7 @@ function simulateRandomWalk() {
         step = input.market.interestSigma * Math.sqrt(timeStep);
         delta = Math.random() < 0.5? -step : step;
 
-        interest *= 1.0 + delta;        
+        interest += input.market.vasicek.a*(input.market.vasicek.b - interest)*timeStep + delta;
         if (interest < 0.0) interest = 0.0;
 
         cash += income * timeStep;
@@ -130,4 +132,23 @@ function simulateRandomWalk() {
     }
 
     return walk;
+}
+
+function getSecurityValue(security) {
+    switch (security.kind) {
+        case "stock": return security.price;
+        case "bond": return bondValue(security);
+    }
+}
+
+function getBondValue(bond, interest) {
+
+    let value = 0.0, factor = 1.0;
+    for (let t = 0; t < bond.duration * bond.frequency; t++) {
+        factor /= 1.0 + interest;
+        value += factor*bond.coupon
+    }
+
+    value += bond.faceValue / Math.pow(1.0 + interest, bond.duration);
+    return value;
 }
