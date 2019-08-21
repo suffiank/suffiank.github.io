@@ -143,10 +143,10 @@ function getSecurityValue(security) {
 
 function getBondValue(bond, interest) {
 
-    let value = 0.0, factor = 1.0;
+    let value = 0.0, discount = 1.0;
     for (let t = 0; t < bond.duration * bond.frequency; t++) {
-        factor /= 1.0 + interest;
-        value += factor*bond.coupon
+        discount /= 1.0 + interest;
+        value += discount*bond.coupon
     }
 
     value += bond.faceValue / Math.pow(1.0 + interest, bond.duration);

@@ -103,7 +103,8 @@ function refreshInputs() {
     input.market.securities['UST'].faceValue = 1000.00;
     input.market.securities['UST'].coupon = getInput("bond-coupon", "money");
     input.market.securities['UST'].frequency =  getInput("bond-frequency", "int");
-    input.market.securities['UST'].duration = getInput("bond-duration");    
+    input.market.securities['UST'].duration = getInput("bond-duration");
+    input.market.securities['UST'].moodys = "Aaa";
 
     input.market.inflation = getInput("inflation-rate");
     input.market.inflationSigma = getInput("inflation-sigma");
