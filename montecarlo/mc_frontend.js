@@ -340,7 +340,7 @@ function refreshTable() {
         if (relativeTime - lastPrintedAt >= printStep) {
 
             let row = {id: rows.length, date: walk[i].time.toLocaleDateString("en-US", format)};
-            row.age = Math.floor(global.input.startAge + relativeTime);
+            row.age = Math.floor(global.input.agent.startAge + relativeTime);
             row[`cash`] = parseFloat(walk[i].cash);
             row[`bonds`] = parseFloat(walk[i].bondsValue);
             row[`stock`] = parseFloat(walk[i].stockValue);
