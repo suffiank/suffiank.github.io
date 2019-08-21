@@ -155,11 +155,30 @@ function refreshGraph() {
 
         let canvas = document.getElementById('graph-canvas-id');
 
+        let float2dollar = function(value, index, values) {
+            return "$"+parseFloat(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+            
         let options = {
             title: {
                 display: false,
                 text: 'Market',
                 position: 'top'
+            },
+            tooltips: {
+                callbacks: {
+                    label: (tooltipItem, data) => {
+
+                        let s = `${data.datasets[tooltipItem.datasetIndex].label} : `;
+                        switch (tooltipItem.datasetIndex) {
+                            case 0: return s + `${float2dollar(tooltipItem.value, null, null)}`;
+                            case 1: return s + `${(100.*parseFloat(tooltipItem.value)).toFixed(2)}%`;
+                            case 2: return s + `${float2dollar(tooltipItem.value, null, null)}`;
+                        }
+
+                        return s + `${tooltipItem.value}`;
+                    }
+                }
             },
             maintainAspectRatio: false,
             scales: {
@@ -175,8 +194,7 @@ function refreshGraph() {
                         position: 'left',
                         ticks: {
                             beginAtZero: true,
-                            callback: (value, index, values) =>
-                                "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                            callback: float2dollar
                         },
                     },
                     {
@@ -194,8 +212,7 @@ function refreshGraph() {
                         position: 'right',
                         ticks: {
                             beginAtZero: true,
-                            callback: (value, index, values) =>
-                                "$"+(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                            callback: float2dollar
                         },
                         gridLines: {display: false}
                     }    
