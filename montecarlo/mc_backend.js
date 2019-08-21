@@ -38,36 +38,40 @@ function simulateRandomWalk() {
     let input = global.input;
 
     let timeStep = input.montecarlo.timeStep;
-    let nyears = input.stopAge - input.startAge;
+    let nyears = input.agent.stopAge - input.agent.startAge;
     let nsteps = Math.floor(nyears/timeStep);
 
     let today = new Date().getTime();
     let lastRecordedAt = -1e5;
     let dead = false;
 
-    let cash = input.cash;
-    let income = input.income;
-    let expenses = input.expenses;
+    let cash = input.agent.cash;
+    let income = input.agent.income;
+    let expenses = input.agent.expenses;
 
     let accruedInterest = 0.0;
     let accruedIncome = 0.0;
     let accruedExpense = 0.0;
     
     let stock = {};
-    stock.price = input.stock.price;
-    stock.units = input.stock.units;
+    stock.price = input.market.securities['SPY'].price;
+    stock.units = input.agent.portfolio
+        .filter((asset) => asset.symbol == 'SPY')
+        .reduce((units, asset) => units + asset.units, 0);
 
     let bonds = {};
-    bonds.units = input.bonds.units;
+    bonds.units = input.agent.portfolio
+        .filter((asset) => asset.symbol == 'UST')
+        .reduce((units, asset) => units + asset.units, 0);
 
-    let interest = input.interest.rate;
-    let inflation = input.inflation.rate;
+    let interest = input.market.interest;
+    let inflation = input.market.inflation;
 
     let walk = [];
     for (let i = 0; i < nsteps; i++) {
 
         let time = i*timeStep;
-        let age = input.startAge + time;
+        let age = input.agent.startAge + time;
 
         if (time - lastRecordedAt > input.montecarlo.recordStep) {
 
@@ -97,21 +101,21 @@ function simulateRandomWalk() {
         }
 
         // random walk equity
-        let step = input.stock.sigma * Math.sqrt(timeStep);
+        let step = input.market.securities['SPY'].sigma * Math.sqrt(timeStep);
         let delta = Math.random() < 0.5? -step : step;        
 
-        stock.price *= 1.0 + timeStep*input.stock.return + delta;
+        stock.price *= 1.0 + timeStep*input.market.securities['SPY'].return + delta;
         if (stock.price < 0.0) stock.price = 0.0;
 
         // random walk interest
-        step = input.interest.sigma * Math.sqrt(timeStep);
+        step = input.market.interestSigma * Math.sqrt(timeStep);
         delta = Math.random() < 0.5? -step : step;
 
         interest *= 1.0 + delta;        
         if (interest < 0.0) interest = 0.0;
 
         cash += income * timeStep;
-        cash += age > 67? input.socialsecurity*timeStep : 0.0;
+        cash += age > 67? input.agent.socialsecurity*timeStep : 0.0;
         cash += interest*bonds.units*1000.0*timeStep;
 
         accruedInterest += interest*bonds.units*1000.0*timeStep;
@@ -119,7 +123,7 @@ function simulateRandomWalk() {
         accruedExpense += expenses * timeStep;
 
         cash -= expenses * timeStep;
-        cash -= age < 65? input.healthcare*timeStep : 0.0;
+        cash -= age < 65? input.agent.healthcare*timeStep : 0.0;
 
         income *= 1.0 + inflation*timeStep;
         expenses *= 1.0 + inflation*timeStep;

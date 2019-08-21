@@ -57,44 +57,66 @@ function refreshPercentileText() {
 function refreshInputs() {
 
     let input = {};
-    input.startAge = getInput("start-age", "int");
-    input.stopYear = getInput("stop-year", "int");
 
-    input.cash = getInput("start-cash", "money");
-    input.maxCash = getInput("max-cash", "money");
+    // agent profile (age, income etc.)
+    input.agent = {};
+    input.agent.startAge = getInput("start-age", "int");
+    input.agent.stopYear = getInput("stop-year", "int");
 
-    input.income = getInput("income", "money");
-    input.expenses = getInput("expenditure", "money");
-    input.healthcare = getInput("healthcare", "money");
-    input.socialsecurity = getInput("social-security", "money");
+    input.agent.cash = getInput("start-cash", "money");
+    input.agent.maxCash = getInput("max-cash", "money");
 
-    input.bonds = {};
-    input.bonds.units = getInput("bond-units", "int");
-    input.bonds.duration= getInput("bond-duration");
+    input.agent.income = getInput("income", "money");
+    input.agent.expenses = getInput("expenditure", "money");
+    input.agent.healthcare = getInput("healthcare", "money");
+    input.agent.socialsecurity = getInput("social-security", "money");
 
-    input.stock = {};
-    input.stock.price = getInput("spdr-price", "money");
-    input.stock.return = getInput("spdr-return");
-    input.stock.sigma = getInput("spdr-sigma");
-    input.stock.units = getInput("spdr-units", "int");
+    input.agent.portfolio = [];
 
-    input.inflation = {};
-    input.inflation.rate = getInput("inflation-rate");
-    input.inflation.sigma = getInput("inflation-sigma");
+    let assetStockMarket = {
+        symbol: 'SPY', 
+        units: getInput("spy-units", "int"), 
+        purchased: new Date()
+    }
+    input.agent.portfolio.push(assetStockMarket);
 
-    input.interest = {};
-    input.interest.rate = getInput("interest-rate");
-    input.interest.sigma = getInput("interest-sigma");
+    let assetFixedIncome = {
+        symbol: 'UST', 
+        units: getInput("bond-units", "int"), 
+        purchased: new Date()
+    }
+    input.agent.portfolio.push(assetFixedIncome);
+    input.agent.strategy = "cash-balance";
 
-    input.strategy = "cash-balance";
+    // market conditions
+    input.market = {};
+    input.market.securities = {};
 
+    input.market.securities['SPY'] = {};
+    input.market.securities['SPY'].kind = "stock";
+    input.market.securities['SPY'].price = getInput("spy-price", "money");
+    input.market.securities['SPY'].return = getInput("spy-return");
+    input.market.securities['SPY'].sigma = getInput("spy-sigma");
+
+    input.market.securities['UST'] = {};
+    input.market.securities['UST'].kind = "bond";    
+    input.market.securities['UST'].duration = getInput("bond-duration");
+
+    input.market.inflation = getInput("inflation-rate");
+    input.market.inflationSigma = getInput("inflation-sigma");
+
+    input.market.interest = getInput("interest-rate");
+    input.market.interestSigma = getInput("interest-sigma");
+
+    // Monte Carlo simulation parameters
     input.montecarlo = {};
-    let delYears = input.stopYear - new Date().getFullYear();
+    let delYears = input.agent.stopYear - new Date().getFullYear();
     input.montecarlo.trials = getInput("trials", "int");
     input.montecarlo.timeStep = getInput("mc-step", "days");
     input.montecarlo.recordStep = delYears/50.0 * 20.0/365.0;
-    input.stopAge = input.startAge + delYears;
+    input.agent.stopAge = input.agent.startAge + delYears;
 
+    // display parameters
     input.display = {};
     input.display.percentile = getInput("percentile-bar", "int");
     input.display.printStep = getInput("print-step", "days");
@@ -114,7 +136,7 @@ function refreshGraph() {
     let datasets = [];
     datasets.push({
         fill: false,
-        label: 'S&P 500',
+        label: 'S&P 500 (SPY)',
         data:  walk.map(a => a.stockPrice),
         yAxisID: 'price',
         borderColor: 'blue',
@@ -148,7 +170,7 @@ function refreshGraph() {
         datasets: datasets
     }
 
-    let startAge = global.input.startAge;
+    let startAge = global.input.agent.startAge;
     let startYear = parseInt(new Date().getFullYear());
 
     if (typeof global.chart === 'undefined') {
