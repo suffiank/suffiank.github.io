@@ -112,8 +112,8 @@ function refreshInputs() {
     input.market.interestSigma = getInput("interest-sigma");
 
     input.market.vasicek = {}
-    input.market.vasicek.a = 0.01;
-    input.market.vasicek.b = 0.05;
+    input.market.vasicek.a = 1.750;
+    input.market.vasicek.b = 0.075;
 
     // Monte Carlo simulation parameters
     input.montecarlo = {};
