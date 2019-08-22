@@ -77,7 +77,7 @@ function simulateRandomWalk() {
             var point = {
                 time: new Date(absoluteTime),
                 cash: agent.cash,
-                stockPrice: market.securities['SPY'].price,
+                spyPrice: market.securities['SPY'].price,
                 stockValue: stockValue,
                 bondsValue: bondsValue,
                 interestRate: market.interest,

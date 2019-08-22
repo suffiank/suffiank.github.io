@@ -307,7 +307,8 @@ function refreshTable() {
     fields.push(withDefaults({title: "Date", field: "date", width: 70}));
     fields.push(withDefaults({title: "Age", field: "age", width: 55}));
 
-    let walkColumns = [];
+    let agentColumns = [];
+    let marketColumns = [];
 
     defaults = {
         align: 'right', 
@@ -317,14 +318,17 @@ function refreshTable() {
         formatterParams: {symbol: "$"}
     }
 
-    walkColumns.push(withDefaults({title: 'Asset Value', field: 'value'}));
-    walkColumns.push(withDefaults({title: 'Cash', field: 'cash'}));
-    walkColumns.push(withDefaults({title: 'Bonds', field: 'bonds'}));
-    walkColumns.push(withDefaults({title: 'Stock', field: 'stock'}));
-    walkColumns.push(withDefaults({title: 'Income', field: 'income'}));
-    walkColumns.push(withDefaults({title: 'Coupons', field: 'coupons'}));
-    walkColumns.push(withDefaults({title: 'Dividends', field: 'dividends'}));
-    walkColumns.push(withDefaults({title: 'Expense', field: 'expense'}));
+    agentColumns.push(withDefaults({title: 'Asset Value', field: 'value'}));
+    agentColumns.push(withDefaults({title: 'Cash', field: 'cash'}));
+    agentColumns.push(withDefaults({title: 'Bonds', field: 'bondsValue'}));
+    agentColumns.push(withDefaults({title: 'Stock', field: 'stockValue'}));
+    agentColumns.push(withDefaults({title: 'Income', field: 'income'}));;
+    agentColumns.push(withDefaults({title: 'Expense', field: 'expense'}));
+
+    defaults.width = 90;
+    agentColumns.push(withDefaults({title: 'Coupons', field: 'coupons'}));
+    agentColumns.push(withDefaults({title: 'Dividends', field: 'dividends'}))
+    marketColumns.push(withDefaults({title: 'S&P 500', field: 'spyPrice'}));
 
     defaults = {
         align: 'right',
@@ -333,11 +337,15 @@ function refreshTable() {
         formatter: (cell, formatterParams) => (100.0*cell.getValue()).toFixed(2) + "%",
     }
 
-    walkColumns.push(withDefaults({title: 'Interest', field: 'interest'}));
+    marketColumns.push(withDefaults({title: 'Interest', field: 'interest'}));
 
     fields.push({
-        title: `${percentile}th percentile`,
-        columns:walkColumns
+        title: `Agent at ${percentile}th percentile`,
+        columns:agentColumns
+    });
+    fields.push({
+        title: `Market Conditions`,
+        columns:marketColumns
     });
 
     fields.push({
@@ -377,14 +385,15 @@ function refreshTable() {
             let row = {id: rows.length, date: walk[i].time.toLocaleDateString("en-US", format)};
             row.age = Math.floor(global.input.agent.startAge + relativeTime);
             row[`cash`] = parseFloat(walk[i].cash);
-            row[`bonds`] = parseFloat(walk[i].bondsValue);
-            row[`stock`] = parseFloat(walk[i].stockValue);
+            row[`bondsValue`] = parseFloat(walk[i].bondsValue);
+            row[`stockValue`] = parseFloat(walk[i].stockValue);
             row[`value`] = parseFloat(walk[i].assetValue);
             row[`income`] = accruedIncome;
             row[`expense`] = accruedExpense;
             row[`dividends`] = accruedDividends;
             row[`coupons`] = accruedCoupons;
             row[`interest`] = parseFloat(walk[i].interestRate);
+            row[`spyPrice`] = parseFloat(walk[i].spyPrice);
             row[`inflation`] = parseFloat(walk[i].inflationRate);            
             row[`comment`] = comment;
 
