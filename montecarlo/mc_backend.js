@@ -34,60 +34,57 @@ function refreshSimulation() {
 
 function simulateRandomWalk() {
 
-    // pull parameters from input settings
     let input = global.input;
 
+    // create deep copy of starting conditions
+    let market = JSON.parse(JSON.stringify(input.market));
+    let agent = JSON.parse(JSON.stringify(input.agent))
+
     let timeStep = input.montecarlo.timeStep;
-    let nyears = input.agent.stopAge - input.agent.startAge;
+    let nyears = agent.stopAge - agent.startAge;
     let nsteps = Math.floor(nyears/timeStep);
 
     let today = new Date().getTime();
     let lastRecordedAt = -1e5;
     let dead = false;
 
-    let cash = input.agent.cash;
-    let income = input.agent.income;
-    let expenses = input.agent.expenses;
-
     let accruedInterest = 0.0;
     let accruedIncome = 0.0;
     let accruedExpense = 0.0;
+
+    let comment = "";
     
-    let stock = {};
-    stock.price = input.market.securities['SPY'].price;
-    stock.units = input.agent.portfolio
-        .filter((asset) => asset.symbol == 'SPY')
-        .reduce((units, asset) => units + asset.units, 0);
-
-    let bonds = {};
-    bonds.units = input.agent.portfolio
-        .filter((asset) => asset.symbol == 'UST')
-        .reduce((units, asset) => units + asset.units, 0);
-
-    let interest = input.market.interest;
-    let inflation = input.market.inflation;
-
     let walk = [];
     for (let i = 0; i < nsteps; i++) {
 
-        let time = i*timeStep;
-        let age = input.agent.startAge + time;
+        let relativeTime = i*timeStep;
+        let absoluteTime = today + 365*24*3600*1000*relativeTime;
+        let age = agent.startAge + relativeTime;
 
-        if (time - lastRecordedAt > input.montecarlo.recordStep) {
+        if (relativeTime - lastRecordedAt > input.montecarlo.recordStep) {
 
-            let bondValue = getBondValue(input.market.securities['UST'], interest);
+            let stockValue = agent.portfolio
+                .filter((asset) => market.securities[asset.symbol].class == "stock")
+                .reduce((value, stock) => value + 
+                    stock.units * market.securities[stock.symbol].price, 0.0);
+
+            let bondsValue = agent.portfolio
+                .filter((asset) => market.securities[asset.symbol].class == "bond")
+                .reduce((value, bond) => value + 
+                    bond.units * getBondValue(market.securities[bond.symbol], market.interest), 0.0);
 
             var point = {
-                time: new Date(today + 365*24*3600*1000*time),
-                cash: cash,
-                stockPrice: stock.price,
-                stockValue: stock.units*stock.price,
-                bondsValue: bonds.units*bondValue,
-                interestRate: interest,
-                inflationRate: inflation,
+                time: new Date(absoluteTime),
+                cash: agent.cash,
+                stockPrice: market.securities['SPY'].price,
+                stockValue: stockValue,
+                bondsValue: bondsValue,
+                interestRate: market.interest,
+                inflationRate: market.inflation,
                 interestIncome: accruedInterest,
                 income: accruedIncome,
                 expense: accruedExpense,
+                comment: comment,
             }
 
             point.assetValue = point.cash + point.stockValue + point.bondsValue;
@@ -99,36 +96,73 @@ function simulateRandomWalk() {
             accruedInterest = 0.0;
             accruedIncome = 0.0;
             accruedExpense = 0.0;
-            lastRecordedAt = time;
+            lastRecordedAt = relativeTime;
+            comment = "";
         }
 
-        // random walk equity
-        let step = input.market.securities['SPY'].sigma * Math.sqrt(timeStep);
-        let delta = Math.random() < 0.5? -step : step;        
+        // random walk equities
+        for (let symbol in market.securities) {
 
-        stock.price *= 1.0 + timeStep*input.market.securities['SPY'].return + delta;
-        if (stock.price < 0.0) stock.price = 0.0;
+            let security = market.securities[symbol];
+            switch (security.class) {
+                case "stock":
+
+                    let stock = security;
+                    let step = stock.sigma * Math.sqrt(timeStep);
+                    let delta = Math.random() < 0.5? -step : step;
+
+                    stock.price *= 1.0 + timeStep*security.return + delta;
+                    if (stock.price < 0.0) stock.price = 0.0;                    
+                    break;
+            }
+        }
 
         // random walk interest
-        step = input.market.interestSigma * Math.sqrt(timeStep);
-        delta = Math.random() < 0.5? -step : step;
+        let step = market.interestSigma * Math.sqrt(timeStep);
+        let delta = Math.random() < 0.5? -step : step;
 
-        interest += input.market.vasicek.a*(input.market.vasicek.b - interest)*timeStep + delta;
-        if (interest < 0.0) interest = 0.0;
+        market.interest += market.vasicek.a*(market.vasicek.b - market.interest)*timeStep + delta;
+        if (market.interest < 0.0) market.interest = 0.0;
 
-        cash += income * timeStep;
-        cash += age > 67? input.agent.socialsecurity*timeStep : 0.0;
-        cash += interest*bonds.units*1000.0*timeStep;
+        // coupons and dividends
+        let payments = {dividends: 0.0, coupons: 0.0};
+        agent.portfolio.forEach(asset => {
 
-        accruedInterest += interest*bonds.units*1000.0*timeStep;
-        accruedIncome += (income + interest*bonds.units*1000.0)*timeStep 
-        accruedExpense += expenses * timeStep;
+            let security = market.securities[asset.symbol];
+            if (["stock", "bond"].includes(security.class) && security.frequency > 0.0) {
+                if (absoluteTime - asset.lastPaymentOn >= (365*24*3600*1000)/security.frequency) {
+                    switch (security.class) {
+                        case "stock": 
+                            payments.dividends += asset.units * security.dividend;
+                            comment += `Got dividend $${security.dividend} for each ${asset.symbol}<br>`;
+                            break;
+                        case "bond":  
+                            payments.coupons += asset.units * security.coupon;
+                            comment += `Got coupon $${security.coupon} for each ${asset.symbol}<br>`;
+                            break;
+                    }
+                    asset.lastPaymentOn = absoluteTime;
+                }
+            }
+        });
 
-        cash -= expenses * timeStep;
-        cash -= age < 65? input.agent.healthcare*timeStep : 0.0;
+        agent.cash += payments.dividends;
+        agent.cash += payments.coupons;
 
-        income *= 1.0 + inflation*timeStep;
-        expenses *= 1.0 + inflation*timeStep;
+        // income and expense adjustments
+        agent.cash += agent.income*timeStep;
+        agent.cash += age > 67? agent.socialsecurity*timeStep : 0.0;
+
+        agent.cash -= agent.expenses*timeStep;
+        agent.cash -= age < 65? agent.healthcare*timeStep : 0.0;
+
+        accruedInterest += payments.coupons;
+        accruedIncome += agent.income*timeStep + payments.coupons;
+        accruedExpense += agent.expenses*timeStep;
+
+        // inflation adjustment
+        agent.income *= 1.0 + market.inflation*timeStep;
+        agent.expenses *= 1.0 + market.inflation*timeStep;
     }
 
     return walk;

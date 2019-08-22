@@ -71,38 +71,23 @@ function refreshInputs() {
     input.agent.healthcare = getInput("healthcare", "money");
     input.agent.socialsecurity = getInput("social-security", "money");
 
-    input.agent.portfolio = [];
-
-    let assetStockMarket = {
-        symbol: 'SPY', 
-        units: getInput("spy-units", "int"), 
-        purchased: new Date()
-    }
-    input.agent.portfolio.push(assetStockMarket);
-
-    let assetFixedIncome = {
-        symbol: 'UST', 
-        units: getInput("bond-units", "int"), 
-        purchased: new Date()
-    }
-    input.agent.portfolio.push(assetFixedIncome);
-    input.agent.strategy = "cash-balance";
-
-    // market conditions
+    // starting market conditions
     input.market = {};
     input.market.securities = {};
 
     input.market.securities['SPY'] = {};
-    input.market.securities['SPY'].kind = "stock";
+    input.market.securities['SPY'].class = "stock";
     input.market.securities['SPY'].price = getInput("spy-price", "money");
-    input.market.securities['SPY'].return = getInput("spy-return");
+    input.market.securities['SPY'].return = getInput("spy-return");    
     input.market.securities['SPY'].sigma = getInput("spy-sigma");
+    input.market.securities['SPY'].dividend = 1.43;
+    input.market.securities['SPY'].frequency = 4;
 
     input.market.securities['UST'] = {};
-    input.market.securities['UST'].kind = "bond";
+    input.market.securities['UST'].class = "bond";
     input.market.securities['UST'].faceValue = 1000.00;
     input.market.securities['UST'].coupon = getInput("bond-coupon", "money");
-    input.market.securities['UST'].frequency =  getInput("bond-frequency", "int");
+    input.market.securities['UST'].frequency = getInput("bond-frequency", "int");
     input.market.securities['UST'].duration = getInput("bond-duration");
     input.market.securities['UST'].moodys = "Aaa";
 
@@ -115,6 +100,30 @@ function refreshInputs() {
     input.market.vasicek = {}
     input.market.vasicek.a = 1.750;
     input.market.vasicek.b = 0.075;
+
+    // starting agent portfolio 
+
+    input.agent.portfolio = [];
+    input.agent.strategy = "cash-balance";
+
+    let thisYear = new Date(new Date().getFullYear(), 0, 1).getTime();
+    let assetStockMarket = {
+        symbol: 'SPY', 
+        units: getInput("spy-units", "int"), 
+        purchased: new Date().getTime(),
+        beginPaymentsOn: thisYear,
+        lastPaymentOn: thisYear,
+    }
+    input.agent.portfolio.push(assetStockMarket);
+
+    let assetFixedIncome = {
+        symbol: 'UST', 
+        units: getInput("bond-units", "int"), 
+        purchased: new Date().getTime(),
+        beginPaymentsOn: thisYear,
+        lastPaymentOn: thisYear,
+    }
+    input.agent.portfolio.push(assetFixedIncome);
 
     // Monte Carlo simulation parameters
     input.montecarlo = {};
@@ -334,6 +343,7 @@ function refreshTable() {
 
     let accruedIncome = 0.0;
     let accruedExpense = 0.0;
+    let comment = "";
 
     let rows = [];
     for (let i = 0; i < walk.length; i++) {
@@ -343,6 +353,7 @@ function refreshTable() {
 
         accruedIncome += walk[i].income;
         accruedExpense += walk[i].expense;
+        comment += walk[i].comment;
 
         const printStep = global.input.display.printStep
         if (relativeTime - lastPrintedAt >= printStep) {
@@ -356,13 +367,15 @@ function refreshTable() {
             row[`income`] = accruedIncome;
             row[`expense`] = accruedExpense;
             row[`interest`] = parseFloat(walk[i].interestRate);
-            row[`inflation`] = parseFloat(walk[i].inflationRate);
+            row[`inflation`] = parseFloat(walk[i].inflationRate);            
+            row[`comment`] = comment.split('\n');
 
             rows.push(row);            
             lastPrintedAt = relativeTime;
 
             accruedIncome = 0.0;
             accruedExpense = 0.0;
+            comment = "";
         }
     }
 
