@@ -106,23 +106,32 @@ function refreshInputs() {
     input.agent.portfolio = [];
     input.agent.strategy = "cash-balance";
 
-    let thisYear = new Date(new Date().getFullYear(), 0, 1).getTime();
+    let today = new Date().getTime();
+    let startOfYear = new Date(new Date().getFullYear(), 0, 1).getTime();
+    let yearsToMs = 1000*3600*24*365;
+    let msToYears = 1.0/yearsToMs;
+
     let assetStockMarket = {
         symbol: 'SPY', 
         units: getInput("spy-units", "int"), 
-        purchased: new Date().getTime(),
-        beginPaymentsOn: thisYear,
-        lastPaymentOn: thisYear,
+        purchased: today,
+        beginPaymentsOn: startOfYear,
     }
+    let f = input.market.securities['SPY'].frequency;
+    let n = Math.floor( (today - startOfYear)*msToYears*f );
+    assetStockMarket.lastPaymentOn = startOfYear + yearsToMs*n/f;
     input.agent.portfolio.push(assetStockMarket);
 
     let assetFixedIncome = {
         symbol: 'UST', 
         units: getInput("bond-units", "int"), 
-        purchased: new Date().getTime(),
-        beginPaymentsOn: thisYear,
-        lastPaymentOn: thisYear,
+        purchased: today,
+        beginPaymentsOn: startOfYear,
+        lastPaymentOn: new Date().getTime(),
     }
+    f = input.market.securities['UST'].frequency;
+    n = Math.floor( (today - startOfYear)*msToYears*f );
+    assetFixedIncome.lastPaymentOn = startOfYear + yearsToMs*n/f;
     input.agent.portfolio.push(assetFixedIncome);
 
     // Monte Carlo simulation parameters
@@ -313,6 +322,8 @@ function refreshTable() {
     walkColumns.push(withDefaults({title: 'Bonds', field: 'bonds'}));
     walkColumns.push(withDefaults({title: 'Stock', field: 'stock'}));
     walkColumns.push(withDefaults({title: 'Income', field: 'income'}));
+    walkColumns.push(withDefaults({title: 'Coupons', field: 'coupons'}));
+    walkColumns.push(withDefaults({title: 'Dividends', field: 'dividends'}));
     walkColumns.push(withDefaults({title: 'Expense', field: 'expense'}));
 
     defaults = {
@@ -333,6 +344,7 @@ function refreshTable() {
         title: "Comments", 
         field: "comment", 
         align: 'left', 
+        formatter:"textarea",
         headerSort: false, 
         widthGrow: 1
     });
@@ -343,6 +355,8 @@ function refreshTable() {
 
     let accruedIncome = 0.0;
     let accruedExpense = 0.0;
+    let accruedCoupons = 0.0;
+    let accruedDividends = 0.0;
     let comment = "";
 
     let rows = [];
@@ -353,6 +367,8 @@ function refreshTable() {
 
         accruedIncome += walk[i].income;
         accruedExpense += walk[i].expense;
+        accruedDividends += walk[i].dividends;
+        accruedCoupons += walk[i].coupons;
         comment += walk[i].comment;
 
         const printStep = global.input.display.printStep
@@ -366,15 +382,19 @@ function refreshTable() {
             row[`value`] = parseFloat(walk[i].assetValue);
             row[`income`] = accruedIncome;
             row[`expense`] = accruedExpense;
+            row[`dividends`] = accruedDividends;
+            row[`coupons`] = accruedCoupons;
             row[`interest`] = parseFloat(walk[i].interestRate);
             row[`inflation`] = parseFloat(walk[i].inflationRate);            
-            row[`comment`] = comment.split('\n');
+            row[`comment`] = comment;
 
             rows.push(row);            
             lastPrintedAt = relativeTime;
 
             accruedIncome = 0.0;
             accruedExpense = 0.0;
+            accruedDividends = 0.0;
+            accruedCoupons = 0.0;
             comment = "";
         }
     }

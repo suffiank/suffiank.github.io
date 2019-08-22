@@ -48,7 +48,8 @@ function simulateRandomWalk() {
     let lastRecordedAt = -1e5;
     let dead = false;
 
-    let accruedInterest = 0.0;
+    let accruedDividends = 0.0;
+    let accruedCoupons = 0.0;
     let accruedIncome = 0.0;
     let accruedExpense = 0.0;
 
@@ -81,7 +82,8 @@ function simulateRandomWalk() {
                 bondsValue: bondsValue,
                 interestRate: market.interest,
                 inflationRate: market.inflation,
-                interestIncome: accruedInterest,
+                coupons: accruedCoupons,
+                dividends: accruedDividends,
                 income: accruedIncome,
                 expense: accruedExpense,
                 comment: comment,
@@ -93,7 +95,8 @@ function simulateRandomWalk() {
             if (dead) point.assetValue = 0.0;
             walk.push(point);
 
-            accruedInterest = 0.0;
+            accruedDividends = 0.0;
+            accruedCoupons = 0.0;
             accruedIncome = 0.0;
             accruedExpense = 0.0;
             lastRecordedAt = relativeTime;
@@ -125,8 +128,10 @@ function simulateRandomWalk() {
         if (market.interest < 0.0) market.interest = 0.0;
 
         // coupons and dividends
+        let expire = [];
         let payments = {dividends: 0.0, coupons: 0.0};
-        agent.portfolio.forEach(asset => {
+
+        agent.portfolio.forEach((asset, index) => {
 
             let security = market.securities[asset.symbol];
             if (["stock", "bond"].includes(security.class) && security.frequency > 0.0) {
@@ -134,30 +139,36 @@ function simulateRandomWalk() {
                     switch (security.class) {
                         case "stock": 
                             payments.dividends += asset.units * security.dividend;
-                            comment += `Got dividend $${security.dividend} for each ${asset.symbol}<br>`;
                             break;
                         case "bond":  
                             payments.coupons += asset.units * security.coupon;
-                            comment += `Got coupon $${security.coupon} for each ${asset.symbol}<br>`;
                             break;
                     }
                     asset.lastPaymentOn = absoluteTime;
                 }
+                if (security.class == "bond")
+                if (absoluteTime - asset.purchased >= (365*24*3600*1000)*security.duration) {
+                    expire.push(index);
+                }
             }
         });
 
-        agent.cash += payments.dividends;
-        agent.cash += payments.coupons;
+        while (expire.length) {
+            agent.portfolio.splice(expire.pop(), 1);
+        }
 
         // income and expense adjustments
         agent.cash += agent.income*timeStep;
+        agent.cash += payments.dividends;
+        agent.cash += payments.coupons;        
         agent.cash += age > 67? agent.socialsecurity*timeStep : 0.0;
 
         agent.cash -= agent.expenses*timeStep;
         agent.cash -= age < 65? agent.healthcare*timeStep : 0.0;
 
-        accruedInterest += payments.coupons;
-        accruedIncome += agent.income*timeStep + payments.coupons;
+        accruedCoupons += payments.coupons;
+        accruedDividends += payments.dividends;
+        accruedIncome += agent.income*timeStep + payments.coupons + payments.dividends;
         accruedExpense += agent.expenses*timeStep;
 
         // inflation adjustment
