@@ -54,6 +54,7 @@ function simulateRandomWalk() {
         income: 0.0,
         expense: 0.0,
         matured: 0.0,
+        transactions: 0.0,
     };
 
     let comment = "";
@@ -78,26 +79,27 @@ function simulateRandomWalk() {
                     bond.units * getBondValue(
                         bond, market.securities[bond.symbol], absoluteTime, market.interest), 0.0);
 
+            let assetValue = agent.cash + stockValue + bondsValue;
+            if (assetValue < 0.0) dead = true;
+            if (dead) comment += "Bankrupt :(\n"
+
             var point = {
                 time: new Date(absoluteTime),
+                assetValue: assetValue,
                 cash: agent.cash,
                 spyPrice: market.securities['SPY'].price,
                 stockValue: stockValue,
                 bondsValue: bondsValue,
                 interestRate: market.interest,
-                inflationRate: market.inflation,
+                inflationRate: market.inflation,                
                 coupons: accrued.coupons,
                 dividends: accrued.dividends,
                 matured: accrued.matured,
+                transactions: accrued.transactions,
                 income: accrued.income,
                 expense: accrued.expense,
                 comment: comment,
             }
-
-            point.assetValue = point.cash + point.stockValue + point.bondsValue;
-
-            if (point.assetValue <= 0.0) dead = true;
-            if (dead) point.assetValue = 0.0;
             walk.push(point);
 
             for (let property in accrued) {
@@ -105,6 +107,8 @@ function simulateRandomWalk() {
             }
             lastRecordedAt = relativeTime;
             comment = "";
+
+            if (dead) break;
         }
 
         // random walk equities
@@ -162,6 +166,7 @@ function simulateRandomWalk() {
             agent.portfolio.splice(expire.pop(), 1);
         }
 
+
         // income and expense adjustments
         agent.cash += agent.income*timeStep;
         agent.cash += payments.dividends;
@@ -172,6 +177,62 @@ function simulateRandomWalk() {
         agent.cash -= agent.expenses*timeStep;
         agent.cash -= age < 65? agent.healthcare*timeStep : 0.0;
 
+        // buy and sell to maintain cash range
+        agent.portfolio = agent.portfolio.sort((a,b) => a.purchased < b.purchased? -1:1);
+
+        let capitalGain = 0.0, salesIncome = 0.0;
+        while (agent.cash < agent.minCash && agent.portfolio.length > 0) {
+
+            let asset = agent.portfolio[0];
+
+            let saleNeed = (agent.maxCash + agent.minCash)/2.0 - agent.cash;
+            let fetchPrice = getAssetValue(asset, market, absoluteTime);
+
+            let neededUnits = Math.floor(saleNeed/fetchPrice);
+            let saleUnits = Math.min(asset.units, neededUnits);
+
+            let saleCash = saleUnits*fetchPrice;
+            capitalGain += saleCash - saleUnits*agent.portfolio.costBasis;
+            salesIncome += saleCash;
+            agent.cash += saleCash;
+            
+            comment += `Sold ${saleUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.\n`;
+            console.log(comment);
+            agent.portfolio.splice(0, 1);            
+        }
+
+        let purchaseCosts = 0.0;
+        if (agent.cash > agent.maxCash) {
+
+            let purchasePower = agent.cash - (agent.maxCash + agent.minCash)/2.0;
+            let price = +(market.securities['SPY'].price.toFixed(2));
+            let units = Math.floor(purchasePower/price);
+
+            // this needs to be done better!
+            let startOfYear = new Date(new Date().getFullYear(), 0, 1).getTime();
+            let yearsToMs = 1000*3600*24*365;
+            let msToYears = 1.0/yearsToMs;
+
+            let f = input.market.securities['SPY'].frequency;
+            let n = Math.floor( (absoluteTime - startOfYear)*msToYears*f );
+            let lastPaymentOn = startOfYear + yearsToMs*n/f;
+
+            agent.portfolio.push({
+                symbol: 'SPY',
+                units:  units,
+                purchased: absoluteTime,
+                lastPaymentOn: lastPaymentOn,
+                costBasis: price,
+            });
+
+            purchaseCosts = units*price;
+            agent.cash -= purchaseCosts;
+
+            comment += `Purchased ${units} shares of SPY at $${price.toFixed(2)}.\n`;
+        }
+        
+        // accruals
+        accrued.transactions += salesIncome - purchaseCosts;
         accrued.matured += payments.matured;
         accrued.coupons += payments.coupons;
         accrued.dividends += payments.dividends;
@@ -186,11 +247,17 @@ function simulateRandomWalk() {
     return walk;
 }
 
-function getSecurityValue(security) {
-    switch (security.kind) {
-        case "stock": return security.price;
-        case "bond": return bondValue(security);
+function getAssetValue(asset, market, absoluteTime) {
+
+    let security = market.securities[asset.symbol];
+    switch (security.class) {
+        case "stock": 
+            return security.price;
+        case "bond": 
+            return getBondValue(asset, security, absoluteTime, market.interest);
     }
+
+    return 0.0;
 }
 
 function getBondValue(bondAsset, bondIssue, absoluteTime, interest) {
@@ -198,6 +265,8 @@ function getBondValue(bondAsset, bondIssue, absoluteTime, interest) {
     const yearsToMs = 365*24*3600*1000;
     const msToYears = 1.0/yearsToMs;
 
+    // t0 = time in years to next coupon
+    // t1 = time in years to maturity date
     let f = bondIssue.frequency;
     let n = Math.ceil( (absoluteTime - bondAsset.lastPaymentOn)*msToYears*f );
     let t0 = (bondAsset.lastPaymentOn - absoluteTime)*msToYears + n/f;
@@ -208,7 +277,6 @@ function getBondValue(bondAsset, bondIssue, absoluteTime, interest) {
         value += bondIssue.coupon / Math.pow(1.0 + interest, t);
     }
 
-    let dt = bondIssue.duration - (absoluteTime - bondAsset.purchased)*msToYears;
-    value += bondIssue.faceValue / Math.pow(1.0 + interest, dt);
+    value += bondIssue.faceValue / Math.pow(1.0 + interest, t1);
     return value;
 }

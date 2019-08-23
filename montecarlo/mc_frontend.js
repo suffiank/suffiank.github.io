@@ -64,6 +64,7 @@ function refreshInputs() {
     input.agent.stopYear = getInput("stop-year", "int");
 
     input.agent.cash = getInput("start-cash", "money");
+    input.agent.minCash = getInput("min-cash", "money");
     input.agent.maxCash = getInput("max-cash", "money");
 
     input.agent.income = getInput("income", "money");
@@ -107,6 +108,7 @@ function refreshInputs() {
 
     input.agent.portfolio = [];
     input.agent.strategy = "cash-balance";
+    input.agent.stockToBonds = getInput("stock-to-bonds");
 
     let today = new Date().getTime();
     let startOfYear = new Date(new Date().getFullYear(), 0, 1).getTime();
@@ -117,7 +119,8 @@ function refreshInputs() {
         symbol: 'SPY', 
         units: getInput("spy-units", "int"), 
         purchased: today,
-        beginPaymentsOn: startOfYear,
+        beginPaymentsOn: startOfYear,        
+        costBasis: getInput("spy-price", "money"),
     }
     let f = input.market.securities['SPY'].frequency;
     let n = Math.floor( (today - startOfYear)*msToYears*f );
@@ -129,7 +132,7 @@ function refreshInputs() {
         units: getInput("bond-units", "int"), 
         purchased: today,
         beginPaymentsOn: startOfYear,
-        lastPaymentOn: new Date().getTime(),
+        costBasis: 1000.0,
     }
     f = input.market.securities['UST'].frequency;
     n = Math.floor( (today - startOfYear)*msToYears*f );
@@ -244,7 +247,8 @@ function refreshGraph() {
                         position: 'left',
                         ticks: {
                             beginAtZero: true,
-                            callback: float2dollar
+                            callback: float2dollar,
+                            min: 0.0
                         },
                     },
                     {
@@ -331,6 +335,7 @@ function refreshTable() {
     agentColumns.push(withDefaults({title: 'Coupons', field: 'coupons'}));
     agentColumns.push(withDefaults({title: 'Matured', field: 'matured'}));
     agentColumns.push(withDefaults({title: 'Dividends', field: 'dividends'}))
+    agentColumns.push(withDefaults({title: 'Buy/Sell', field: 'transactions'}))
     marketColumns.push(withDefaults({title: 'S&P 500', field: 'spyPrice'}));
 
     defaults = {
@@ -370,6 +375,7 @@ function refreshTable() {
         coupons: 0.0,
         matured: 0.0,
         dividends: 0.0,
+        transactions: 0.0,
     };
     let comment = "";
 
@@ -384,10 +390,11 @@ function refreshTable() {
         accrued.dividends += walk[i].dividends;
         accrued.coupons += walk[i].coupons;
         accrued.matured += walk[i].matured;
+        accrued.transactions += walk[i].transactions;
         comment += walk[i].comment;
 
         const printStep = global.input.display.printStep
-        if (relativeTime - lastPrintedAt >= printStep) {
+        if (relativeTime - lastPrintedAt >= printStep || i == walk.length-1) {
 
             let row = {id: rows.length, date: walk[i].time.toLocaleDateString("en-US", format)};
             row.age = Math.floor(global.input.agent.startAge + relativeTime);
@@ -400,6 +407,7 @@ function refreshTable() {
             row[`dividends`] = accrued.dividends;
             row[`coupons`] = accrued.coupons;
             row[`matured`] = accrued.matured;
+            row[`transactions`] = accrued.transactions;
             row[`interest`] = parseFloat(walk[i].interestRate);
             row[`spyPrice`] = parseFloat(walk[i].spyPrice);
             row[`inflation`] = parseFloat(walk[i].inflationRate);            
