@@ -309,7 +309,7 @@ function refreshTable() {
         headerSort: false
     };
 
-    let fields = [];    
+    let fields = [];
     fields.push(withDefaults({title: "Date", field: "date", width: 70}));
     fields.push(withDefaults({title: "Age", field: "age", width: 55}));
 
@@ -324,7 +324,7 @@ function refreshTable() {
         formatterParams: {symbol: "$"}
     }
 
-    agentColumns.push(withDefaults({title: 'Asset Value', field: 'value'}));
+    agentColumns.push(withDefaults({title: 'Assets', field: 'value'}));
     agentColumns.push(withDefaults({title: 'Cash', field: 'cash'}));
     agentColumns.push(withDefaults({title: 'Bonds', field: 'bondsValue'}));
     agentColumns.push(withDefaults({title: 'Stock', field: 'stockValue'}));
@@ -333,8 +333,8 @@ function refreshTable() {
 
     defaults.width = 90;
     agentColumns.push(withDefaults({title: 'Coupons', field: 'coupons'}));
-    agentColumns.push(withDefaults({title: 'Matured', field: 'matured'}));
     agentColumns.push(withDefaults({title: 'Dividends', field: 'dividends'}))
+    agentColumns.push(withDefaults({title: 'Matured', field: 'matured'}));
     agentColumns.push(withDefaults({title: 'Buy/Sell', field: 'transactions'}))
     marketColumns.push(withDefaults({title: 'S&P 500', field: 'spyPrice'}));
 
@@ -362,7 +362,8 @@ function refreshTable() {
         align: 'left', 
         formatter:"textarea",
         headerSort: false, 
-        widthGrow: 1
+        widthGrow: 1,
+        responsive: 1
     });
 
     // define row data from walk data
