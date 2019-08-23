@@ -163,7 +163,7 @@ function refreshGraph() {
     datasets.push({
         fill: false,
         label: 'S&P 500 (SPY)',
-        data:  walk.map(a => a.stockPrice),
+        data:  walk.map(a => a.spyPrice),
         yAxisID: 'price',
         borderColor: 'blue',
         backgroundColor: '#00004477',
@@ -327,6 +327,7 @@ function refreshTable() {
 
     defaults.width = 90;
     agentColumns.push(withDefaults({title: 'Coupons', field: 'coupons'}));
+    agentColumns.push(withDefaults({title: 'Matured', field: 'matured'}));
     agentColumns.push(withDefaults({title: 'Dividends', field: 'dividends'}))
     marketColumns.push(withDefaults({title: 'S&P 500', field: 'spyPrice'}));
 
@@ -361,10 +362,13 @@ function refreshTable() {
     var format = { year: 'numeric', month: '2-digit' };
     let lastPrintedAt = -1e5;
 
-    let accruedIncome = 0.0;
-    let accruedExpense = 0.0;
-    let accruedCoupons = 0.0;
-    let accruedDividends = 0.0;
+    let accrued = {
+        income: 0.0,
+        expense: 0.0,
+        coupons: 0.0,
+        matured: 0.0,
+        dividends: 0.0,
+    };
     let comment = "";
 
     let rows = [];
@@ -373,10 +377,11 @@ function refreshTable() {
         let relativeTime = (walk[i].time.getTime() - walk[0].time.getTime())
             /(1000*3600*24*365);
 
-        accruedIncome += walk[i].income;
-        accruedExpense += walk[i].expense;
-        accruedDividends += walk[i].dividends;
-        accruedCoupons += walk[i].coupons;
+        accrued.income += walk[i].income;
+        accrued.expense += walk[i].expense;
+        accrued.dividends += walk[i].dividends;
+        accrued.coupons += walk[i].coupons;
+        accrued.matured += walk[i].matured;
         comment += walk[i].comment;
 
         const printStep = global.input.display.printStep
@@ -388,10 +393,11 @@ function refreshTable() {
             row[`bondsValue`] = parseFloat(walk[i].bondsValue);
             row[`stockValue`] = parseFloat(walk[i].stockValue);
             row[`value`] = parseFloat(walk[i].assetValue);
-            row[`income`] = accruedIncome;
-            row[`expense`] = accruedExpense;
-            row[`dividends`] = accruedDividends;
-            row[`coupons`] = accruedCoupons;
+            row[`income`] = accrued.income;
+            row[`expense`] = accrued.expense;
+            row[`dividends`] = accrued.dividends;
+            row[`coupons`] = accrued.coupons;
+            row[`matured`] = accrued.matured;
             row[`interest`] = parseFloat(walk[i].interestRate);
             row[`spyPrice`] = parseFloat(walk[i].spyPrice);
             row[`inflation`] = parseFloat(walk[i].inflationRate);            
@@ -400,10 +406,9 @@ function refreshTable() {
             rows.push(row);            
             lastPrintedAt = relativeTime;
 
-            accruedIncome = 0.0;
-            accruedExpense = 0.0;
-            accruedDividends = 0.0;
-            accruedCoupons = 0.0;
+            for (let property in accrued) {
+                accrued[property] = 0.0;
+            }
             comment = "";
         }
     }
