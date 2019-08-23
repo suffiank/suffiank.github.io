@@ -195,40 +195,52 @@ function simulateRandomWalk() {
             capitalGain += saleCash - saleUnits*agent.portfolio.costBasis;
             salesIncome += saleCash;
             agent.cash += saleCash;
+            asset.units -= saleUnits;
             
             comment += `Sold ${saleUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.\n`;
-            console.log(comment);
-            agent.portfolio.splice(0, 1);            
+
+            if (asset.units == 0) {
+                agent.portfolio.splice(0, 1);
+            }
         }
 
         let purchaseCosts = 0.0;
         if (agent.cash > agent.maxCash) {
 
             let purchasePower = agent.cash - (agent.maxCash + agent.minCash)/2.0;
-            let price = +(market.securities['SPY'].price.toFixed(2));
-            let units = Math.floor(purchasePower/price);
 
-            // this needs to be done better!
-            let startOfYear = new Date(new Date().getFullYear(), 0, 1).getTime();
-            let yearsToMs = 1000*3600*24*365;
-            let msToYears = 1.0/yearsToMs;
+            let purchaseStock = purchasePower*agent.stockToBonds;
+            let purchaseBonds = purchasePower - purchaseStock;
 
-            let f = input.market.securities['SPY'].frequency;
-            let n = Math.floor( (absoluteTime - startOfYear)*msToYears*f );
-            let lastPaymentOn = startOfYear + yearsToMs*n/f;
+            let classes = ['stock', 'bonds']
+            for (let i = 0; i < classes.length; i++) {
 
-            agent.portfolio.push({
-                symbol: 'SPY',
-                units:  units,
-                purchased: absoluteTime,
-                lastPaymentOn: lastPaymentOn,
-                costBasis: price,
-            });
+                let symbol = classes[i] == 'stock'? 'SPY' : 'UST';
+                let purchaseAmount = classes[i] == 'stock'? purchaseStock : purchaseBonds;
 
-            purchaseCosts = units*price;
-            agent.cash -= purchaseCosts;
+                // this needs to be done better!
+                let startOfYear = new Date(new Date().getFullYear(), 0, 1).getTime();
+                let yearsToMs = 1000*3600*24*365;
+                let msToYears = 1.0/yearsToMs;
 
-            comment += `Purchased ${units} shares of SPY at $${price.toFixed(2)}.\n`;
+                let f = market.securities[symbol].frequency;
+                let n = Math.floor( (absoluteTime - startOfYear)*msToYears*f );
+                let lastPaymentOn = startOfYear + yearsToMs*n/f;
+
+                let asset = {
+                    symbol: symbol,
+                    purchased: absoluteTime,
+                    lastPaymentOn: lastPaymentOn
+                };                
+                asset.price = +(getAssetValue(asset, market, absoluteTime).toFixed(2));
+                asset.units = Math.floor(purchaseAmount/asset.price);
+                agent.portfolio.push(asset);
+    
+                purchaseCosts += asset.units*asset.price;
+                agent.cash -= asset.units*asset.price;
+    
+                comment += `Purchased ${asset.units} shares of ${symbol} at $${asset.price.toFixed(2)}.\n`;                
+            }
         }
         
         // accruals
