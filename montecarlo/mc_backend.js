@@ -157,6 +157,7 @@ function simulateRandomWalk() {
                 if (security.class == "bond")
                 if (absoluteTime - asset.purchased >= (365*24*3600*1000)*security.duration) {
                     payments.matured += asset.units * security.faceValue;
+                    comment += `Matured ${asset.units} bonds at $${security.faceValue.toFixed(2)} each.\n`
                     expire.push(index);
                 }
             }
