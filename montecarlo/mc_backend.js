@@ -75,7 +75,8 @@ function simulateRandomWalk() {
             let bondsValue = agent.portfolio
                 .filter((asset) => market.securities[asset.symbol].class == "bond")
                 .reduce((value, bond) => value + 
-                    bond.units * getBondValue(market.securities[bond.symbol], market.interest), 0.0);
+                    bond.units * getBondValue(
+                        bond, market.securities[bond.symbol], absoluteTime, market.interest), 0.0);
 
             var point = {
                 time: new Date(absoluteTime),
@@ -192,14 +193,21 @@ function getSecurityValue(security) {
     }
 }
 
-function getBondValue(bond, interest) {
+function getBondValue(bondAsset, bondIssue, absoluteTime, interest) {
 
-    let value = 0.0, discount = 1.0;
-    for (let t = 0; t < bond.duration * bond.frequency; t++) {
-        discount /= 1.0 + interest;
-        value += discount*bond.coupon
+    const yearsToMs = 365*24*3600*1000;
+    const msToYears = 1.0/yearsToMs;
+
+    let f = bondIssue.frequency;
+    let n = Math.ceil( (absoluteTime - bondAsset.lastPaymentOn)*msToYears*f );
+    let t0 = (bondAsset.lastPaymentOn + yearsToMs*n/f - absoluteTime)*msToYears;
+
+    let value = 0.0;
+    for (let t = t0; t < bondIssue.duration; t += 1.0/f) {
+        value += bondIssue.coupon / Math.pow(1.0 + interest, t);
     }
 
-    value += bond.faceValue / Math.pow(1.0 + interest, bond.duration);
+    let dt = (bondAsset.purchased - absoluteTime)*msToYears + bondIssue.duration;
+    value += bondIssue.faceValue / Math.pow(1.0 + interest, dt);
     return value;
 }

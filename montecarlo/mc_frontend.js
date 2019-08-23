@@ -96,10 +96,12 @@ function refreshInputs() {
 
     input.market.interest = getInput("interest-rate");
     input.market.interestSigma = getInput("interest-sigma");
+    input.market.vasicekSpeed = getInput("vasicek-speed");
+    input.market.vasicekRate = getInput("vasicek-rate");
 
     input.market.vasicek = {}
-    input.market.vasicek.a = 1.750;
-    input.market.vasicek.b = 0.075;
+    input.market.vasicek.a = input.market.vasicekSpeed;
+    input.market.vasicek.b = input.market.vasicekRate;
 
     // starting agent portfolio 
 
