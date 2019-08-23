@@ -200,14 +200,15 @@ function getBondValue(bondAsset, bondIssue, absoluteTime, interest) {
 
     let f = bondIssue.frequency;
     let n = Math.ceil( (absoluteTime - bondAsset.lastPaymentOn)*msToYears*f );
-    let t0 = (bondAsset.lastPaymentOn + yearsToMs*n/f - absoluteTime)*msToYears;
+    let t0 = (bondAsset.lastPaymentOn - absoluteTime)*msToYears + n/f;
+    let t1 = (bondAsset.purchased - absoluteTime)*msToYears + bondIssue.duration;
 
     let value = 0.0;
-    for (let t = t0; t < bondIssue.duration; t += 1.0/f) {
+    for (let t = t0; t < t1; t += 1.0/f) {
         value += bondIssue.coupon / Math.pow(1.0 + interest, t);
     }
 
-    let dt = (bondAsset.purchased - absoluteTime)*msToYears + bondIssue.duration;
+    let dt = bondIssue.duration - (absoluteTime - bondAsset.purchased)*msToYears;
     value += bondIssue.faceValue / Math.pow(1.0 + interest, dt);
     return value;
 }
