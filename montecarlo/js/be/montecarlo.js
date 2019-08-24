@@ -84,8 +84,8 @@ function extractPayments(portfolio, securities, absoluteTime, comments) {
     portfolio.forEach((asset, index) => {
 
         let security = securities[asset.symbol];
-        if (["stock", "bond"].includes(security.class) && security.frequency > 0.0) {
-            if (absoluteTime - asset.lastPaymentOn >= (365*24*3600*1000)/security.frequency) {
+        if (["stock", "bond"].includes(security.class) && security.paymentPeriod > 0.0) {
+            if (absoluteTime - asset.lastPaymentOn >= (365*24*3600*1000)*security.paymentPeriod) {
                 switch (security.class) {
                     case "stock": 
                         payments.dividends += asset.units * security.dividend;
@@ -195,7 +195,6 @@ function simulateRandomWalk() {
         setFakeLastPayment(asset, market.securities[asset.symbol])
     )
 
-
     let today = new Date().getTime();
     let lastRecordedAt = -1e5;
     let dead = false;
@@ -251,7 +250,7 @@ function simulateRandomWalk() {
                     income: accrued.income,
                     expense: accrued.expense,
                 },
-                comment: comments.join('\n'),
+                comments: comments,
             }
             mcwalk.push(point);
 
@@ -334,7 +333,7 @@ function getBondValue(bondAsset, bondIssue, absoluteTime, interest) {
 
     // t0 = time in years to next coupon
     // t1 = time in years to maturity date
-    let f = 1.0/bondIssue.period;
+    let f = 1.0/bondIssue.paymentPeriod;
     let n = Math.ceil( (absoluteTime - bondAsset.lastPaymentOn)*global.msToYears*f );
     let t0 = (bondAsset.lastPaymentOn - absoluteTime)*global.msToYears + n/f;
     let t1 = (bondAsset.purchased - absoluteTime)*global.msToYears + bondIssue.duration;

@@ -181,7 +181,7 @@ function getRows(percentile) {
     let lastPrintedAt = -1e5;
 
     let accrued = {};
-    let comment = "";
+    let comments = [];
 
     let rows = [];
     for (let t = 0; t < mcwalk.length; t++) {
@@ -198,8 +198,8 @@ function getRows(percentile) {
 
             accrued[p] += parseFloat(mcwalk[t].accrued[p]);
         }
-        comment += mcwalk[t].comment;
-
+        comments.push.apply(comments, mcwalk[t].comments);
+        
         // sample row data when reached print step
         const printStep = global.input.display.printStep
         if (relativeTime - lastPrintedAt >= printStep || t == mcwalk.length-1) {
@@ -228,10 +228,9 @@ function getRows(percentile) {
                             row[p] = accrued[p];
                         break;
 
-                    case 'comment':
-                        let lines = comment.trim().split('\n');
-                        row.comment = getCommentHtml(lines, true);
-                        row.expander = lines.length > 1? "-":"";
+                    case 'comments':
+                        row.comment = getCommentHtml(comments, true);
+                        row.expander = comments.length > 1? "-":"";
                         break;
 
                     default:
@@ -244,7 +243,7 @@ function getRows(percentile) {
             lastPrintedAt = relativeTime;
 
             accrued = {};
-            comment = "";
+            comments = [];
         }
     }
 
