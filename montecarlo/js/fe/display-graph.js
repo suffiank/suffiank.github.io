@@ -40,7 +40,7 @@ function refreshGraph() {
             },
             {
                 label: 'Interest Rate',
-                data:  walk.map(a => a.interestRate),
+                data:  walk.map(a => a.interest),
                 yAxisID: 'rate',
                 borderColor: '#9370DB',
                 backgroundColor: '#9370DB77',

@@ -156,10 +156,11 @@ function getColumns(percentile) {
                 headerClick: (e, column) => toggleComments()
             },
             {
-                title: "Comments", 
+                title: '<div style="cursor: pointer;">Comments</div>', 
                 field: "comment", 
                 align: 'left', 
                 formatter:"html",
+                headerClick: (e, column) => toggleComments(),
                 headerSort: false, 
                 widthGrow: 1
             },

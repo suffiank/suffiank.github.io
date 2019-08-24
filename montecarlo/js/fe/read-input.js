@@ -89,10 +89,10 @@ function getAgentProfile() {
 
     // basic profile
     agent.startAge = getInput("start-age", "int");
-    agent.cash = getInput("start-cash", "money");
     agent.stopYear = getInput("stop-year", "int");
+    agent.cash = getInput("start-cash", "money");
 
-    agent.income = getInput("income", "money");
+    agent.earnings = getInput("income", "money");
     agent.expenses = getInput("expenditure", "money");
     agent.healthcare = getInput("healthcare", "money");
     agent.socialsecurity = getInput("social-security", "money");
