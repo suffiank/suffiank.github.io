@@ -347,29 +347,69 @@ function refreshTable() {
 
     fields.push({
         title: `Agent at ${percentile}th percentile`,
-        columns:agentColumns
+        columns: agentColumns
     });
     fields.push({
         title: `Market Conditions`,
-        columns:marketColumns
+        columns: marketColumns
     });
 
     fields.push({
-        title: "Comments", 
-        field: "comment", 
-        align: 'left', 
-        formatter:"html",
-        headerSort: false, 
-        widthGrow: 1,
-        cellDblClick: (e, cell) => {
-            let index = cell.getRow().getPosition();
-            let extraText = document.getElementById(`comment${index}-body`);
-            if (extraText.style.display != "none")
-                extraText.style.display = "none";
-            else
-                extraText.style.display = "inline";
-            cell.getRow().normalizeHeight();
-        }
+        title: "",
+        columns: [
+            {
+                title: '<div id = "expander-id">-</div>',
+                field: 'expander',
+                headerSort: false,
+                width: 22,
+                minWidth: 22,
+                align: 'center',
+                formatter: 'html',
+                cellClick: (e, cell) => {
+                    let index = cell.getRow().getPosition();
+                    let extraText = document.getElementById(`comment${index}-body`);
+                    if (cell.getValue() == "") return;
+                    if (extraText.style.display != "none") {
+                        extraText.style.display = "none";
+                        cell.setValue("+");
+                    }
+                    else {
+                        extraText.style.display = "inline";
+                        cell.setValue("-");
+                    }
+                    cell.getRow().normalizeHeight();
+                },
+                headerClick: (e, column) => {
+
+                    let header = document.getElementById("expander-id");
+                    let expand = header.innerHTML == "+";
+                    header.innerHTML = expand? "-" : "+";
+
+                    let cells = column.getCells();
+                    for (let index = 0; index < cells.length; index++) {
+
+                        let expandableText = document.getElementById(`comment${index}-body`);
+                        let cell = cells[index];
+
+                        // why this happens?
+                        if (!cell || cell == null) continue;
+                        if (cell.getValue() == "") continue;
+
+                        expandableText.style.display = expand? "inline" : "none";
+                        cell.setValue(expand? "-" : "+");
+                        cell.getRow().normalizeHeight();
+                    }
+                }
+            },
+            {
+                title: "Comments", 
+                field: "comment", 
+                align: 'left', 
+                formatter:"html",
+                headerSort: false, 
+                widthGrow: 1
+            },
+        ]
     });
 
     // define row data from walk data
@@ -421,9 +461,10 @@ function refreshTable() {
 
             let lines = comment.split('<br>');
             row[`comment`] = `<div id="comment${rows.length}-head">` +
-                lines.slice(0, 1) + (lines.length > 2? " <i>..</i>":"") + "</div>" +
+                lines.slice(0, 1) + "</div>" +
                 `<div id="comment${rows.length}-body">` + 
-                lines.splice(1).join("<br>") + "</div>";
+                lines.slice(1).join("<br>") + "</div>";
+            row["expander"] = lines.length > 2? "-":"";
 
             rows.push(row);            
             lastPrintedAt = relativeTime;
