@@ -90,21 +90,22 @@ function simulateRandomWalk() {
                 spyPrice: market.securities['SPY'].price,
                 stockValue: stockValue,
                 bondsValue: bondsValue,
-                interestRate: market.interest,
-                inflationRate: market.inflation,                
-                coupons: accrued.coupons,
-                dividends: accrued.dividends,
-                matured: accrued.matured,
-                transactions: accrued.transactions,
-                income: accrued.income,
-                expense: accrued.expense,
+                interest: market.interest,
+                inflation: market.inflation,
+                accrued: {
+                    coupons: accrued.coupons,
+                    dividends: accrued.dividends,
+                    matured: accrued.matured,
+                    transactions: accrued.transactions,
+                    income: accrued.income,
+                    expense: accrued.expense,
+                },
                 comment: comment,
             }
             walk.push(point);
 
-            for (let property in accrued) {
+            for (let property in accrued)
                 accrued[property] = 0.0;
-            }
             lastRecordedAt = relativeTime;
             comment = "";
 
@@ -157,7 +158,7 @@ function simulateRandomWalk() {
                 if (security.class == "bond")
                 if (absoluteTime - asset.purchased >= (365*24*3600*1000)*security.duration) {
                     payments.matured += asset.units * security.faceValue;
-                    comment += `Matured ${asset.units} bonds at $${security.faceValue.toFixed(2)} each.<br>`
+                    comment += `Matured ${asset.units} bonds at $${security.faceValue.toFixed(2)} each.\n`
                     expire.push(index);
                 }
             }
@@ -198,7 +199,7 @@ function simulateRandomWalk() {
             agent.cash += saleCash;
             asset.units -= saleUnits;
             
-            comment += `Sold ${saleUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.<br>`;
+            comment += `Sold ${saleUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.\n`;
 
             if (asset.units == 0) {
                 agent.portfolio.splice(0, 1);
@@ -240,7 +241,7 @@ function simulateRandomWalk() {
                 purchaseCosts += asset.units*asset.price;
                 agent.cash -= asset.units*asset.price;
     
-                comment += `Purchased ${asset.units} shares of ${symbol} at $${asset.price.toFixed(2)}.<br>`;                
+                comment += `Purchased ${asset.units} shares of ${symbol} at $${asset.price.toFixed(2)}.\n`;                
             }
         }
         

@@ -9,6 +9,10 @@ function asDollars(value) {
     return "$"+parseFloat(value).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+function asRate(value) {
+    return (100.0*value).toFixed(2) + "%"
+}
+
 function refreshGraph() {
 
     // retrieve Monte Carlo simulation at requested percentile
@@ -76,7 +80,7 @@ function refreshGraph() {
                     let s = `${data.datasets[tooltipItem.datasetIndex].label} : `;
                     switch (tooltipItem.datasetIndex) {
                         case 0: return s + `${asDollars(tooltipItem.value)}`;
-                        case 1: return s + `${(100.*parseFloat(tooltipItem.value)).toFixed(2)}%`;
+                        case 1: return s + `${asRate(tooltipItem.value)}`;
                         case 2: return s + `${asDollars(tooltipItem.value)}`;
                     }
 
@@ -106,7 +110,7 @@ function refreshGraph() {
                     position: 'right',
                     ticks: {
                         beginAtZero: true,              
-                        callback: (value, index, values) => (100.0*value).toFixed(2) + "%"
+                        callback: (value, index, values) => asRate(value),
                     },
                     gridLines: {display: false}
                 },
