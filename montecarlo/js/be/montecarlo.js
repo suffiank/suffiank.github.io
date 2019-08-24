@@ -53,8 +53,11 @@ function simulateRandomWalk() {
         coupons: 0.0,
         income: 0.0,
         expense: 0.0,
+        earned: 0.0,
+        spent: 0.0,
         matured: 0.0,
-        transactions: 0.0,
+        invested: 0.0,
+        liquidated: 0.0,
     };
 
     let comment = "";
@@ -93,10 +96,14 @@ function simulateRandomWalk() {
                 interest: market.interest,
                 inflation: market.inflation,
                 accrued: {
+
                     coupons: accrued.coupons,
                     dividends: accrued.dividends,
                     matured: accrued.matured,
-                    transactions: accrued.transactions,
+                    invested: accrued.invested,
+                    liquidated: accrued.liquidated,
+                    earned: accrued.earned,
+                    spent: accrued.spent,
                     income: accrued.income,
                     expense: accrued.expense,
                 },
@@ -246,12 +253,22 @@ function simulateRandomWalk() {
         }
         
         // accruals
-        accrued.transactions += salesIncome - purchaseCosts;
+        accrued.earned += agent.income*timeStep;
+        accrued.liquidated += salesIncome;
         accrued.matured += payments.matured;
         accrued.coupons += payments.coupons;
         accrued.dividends += payments.dividends;
-        accrued.income += agent.income*timeStep + payments.coupons + payments.dividends;
-        accrued.expense += agent.expenses*timeStep;
+
+        accrued.spent += agent.expenses*timeStep;
+        accrued.invested += purchaseCosts;
+
+        accrued.income += 
+            agent.income*timeStep + payments.coupons + payments.dividends + payments.matured + salesIncome
+            + (age > 67? agent.socialsecurity*timeStep : 0.0);
+
+        accrued.expense += 
+            agent.expenses*timeStep + purchaseCosts 
+            + (age < 65? agent.healthcare*timeStep : 0.0);
 
         // inflation adjustment
         agent.income *= 1.0 + market.inflation*timeStep;
