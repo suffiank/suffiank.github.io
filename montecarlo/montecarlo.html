@@ -2,15 +2,15 @@
 <head>
 
     <!-- see chartjs.org -->
-    <script src="../lib/Chart.bundle.js"></script>
+    <script src="dist/Chart.bundle.js"></script>
 
     <!-- see tabulator.info -->
-    <link rel="stylesheet" href="../lib/tabulator.min.css" />
-    <script type="text/javascript" src="../lib/tabulator.min.js"></script>
+    <link rel="stylesheet" href="dist/tabulator.min.css" />
+    <script type="text/javascript" src="dist/tabulator.min.js"></script>
 
     <!-- monte carlo style sheet -->
-    <link rel="stylesheet" type="text/css" href="montecarlo.css" />
-    <link rel="stylesheet" type="text/css" href="mc_rangebar.css" />
+    <link rel="stylesheet" type="text/css" href="css/montecarlo.css" />
+    <link rel="stylesheet" type="text/css" href="css/rangeinput.css" />
 
 </head>
 <body onload="onPageLoad()">
@@ -172,8 +172,10 @@
         <div class="cashflow-table" id="cashflow-table-id"></div>
     </div>
 
-    <script src="mc_frontend.js"></script>
-    <script src="mc_backend.js"></script>
+    <script src="js/be/montecarlo.js"></script>
+    <script src="js/fe/display-graph.js"></script>
+    <script src="js/fe/display-table.js"></script>
+    <script src="js/fe/read-input.js"></script>
 
 </body>
 </html>
