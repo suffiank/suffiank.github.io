@@ -32,6 +32,30 @@ function refreshSimulation() {
     global.mctrials = mctrials;
 }
 
+function getPortfolioValue(portfolio) {
+
+}
+
+function evolveSecurities(market, timeStep) {
+
+}
+
+function evolveMarketRates(market, timeStep) {
+
+}
+
+function getPayments(portfolio, absoluteTime) {
+
+}
+
+function balancePortfolio(portfolio) {
+
+}
+
+function payTaxes() {
+
+}
+
 function simulateRandomWalk() {
 
     let input = global.input;
