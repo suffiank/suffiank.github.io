@@ -157,7 +157,7 @@ function simulateRandomWalk() {
                 if (security.class == "bond")
                 if (absoluteTime - asset.purchased >= (365*24*3600*1000)*security.duration) {
                     payments.matured += asset.units * security.faceValue;
-                    comment += `Matured ${asset.units} bonds at $${security.faceValue.toFixed(2)} each.\n`
+                    comment += `Matured ${asset.units} bonds at $${security.faceValue.toFixed(2)} each.<br>`
                     expire.push(index);
                 }
             }
@@ -198,7 +198,7 @@ function simulateRandomWalk() {
             agent.cash += saleCash;
             asset.units -= saleUnits;
             
-            comment += `Sold ${saleUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.\n`;
+            comment += `Sold ${saleUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.<br>`;
 
             if (asset.units == 0) {
                 agent.portfolio.splice(0, 1);
@@ -240,7 +240,7 @@ function simulateRandomWalk() {
                 purchaseCosts += asset.units*asset.price;
                 agent.cash -= asset.units*asset.price;
     
-                comment += `Purchased ${asset.units} shares of ${symbol} at $${asset.price.toFixed(2)}.\n`;                
+                comment += `Purchased ${asset.units} shares of ${symbol} at $${asset.price.toFixed(2)}.<br>`;                
             }
         }
         

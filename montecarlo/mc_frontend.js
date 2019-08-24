@@ -310,8 +310,8 @@ function refreshTable() {
     };
 
     let fields = [];
-    fields.push(withDefaults({title: "Date", field: "date", width: 70}));
-    fields.push(withDefaults({title: "Age", field: "age", width: 55}));
+    fields.push(withDefaults({title: "Date", field: "date"}));
+    fields.push(withDefaults({title: "Age", field: "age"}));
 
     let agentColumns = [];
     let marketColumns = [];
@@ -319,7 +319,6 @@ function refreshTable() {
     defaults = {
         align: 'right', 
         headerSort: false, 
-        width: 110, 
         formatter: "money", 
         formatterParams: {symbol: "$"}
     }
@@ -341,7 +340,6 @@ function refreshTable() {
     defaults = {
         align: 'right',
         headerSort: false,
-        width: 80,
         formatter: (cell, formatterParams) => (100.0*cell.getValue()).toFixed(2) + "%",
     }
 
@@ -360,14 +358,22 @@ function refreshTable() {
         title: "Comments", 
         field: "comment", 
         align: 'left', 
-        formatter:"textarea",
+        formatter:"html",
         headerSort: false, 
         widthGrow: 1,
-        responsive: 1
+        cellDblClick: (e, cell) => {
+            let index = cell.getRow().getPosition();
+            let extraText = document.getElementById(`comment${index}-body`);
+            if (extraText.style.display != "none")
+                extraText.style.display = "none";
+            else
+                extraText.style.display = "inline";
+            cell.getRow().normalizeHeight();
+        }
     });
 
     // define row data from walk data
-    var format = { year: 'numeric', month: '2-digit' };
+    var format = { year: 'numeric', month: '2-digit', day: '2-digit' };
     let lastPrintedAt = -1e5;
 
     let accrued = {
@@ -411,8 +417,13 @@ function refreshTable() {
             row[`transactions`] = accrued.transactions;
             row[`interest`] = parseFloat(walk[i].interestRate);
             row[`spyPrice`] = parseFloat(walk[i].spyPrice);
-            row[`inflation`] = parseFloat(walk[i].inflationRate);            
-            row[`comment`] = comment;
+            row[`inflation`] = parseFloat(walk[i].inflationRate);
+
+            let lines = comment.split('<br>');
+            row[`comment`] = `<div id="comment${rows.length}-head">` +
+                lines.slice(0, 1) + (lines.length > 2? " <i>..</i>":"") + "</div>" +
+                `<div id="comment${rows.length}-body">` + 
+                lines.splice(1).join("<br>") + "</div>";
 
             rows.push(row);            
             lastPrintedAt = relativeTime;
@@ -429,9 +440,10 @@ function refreshTable() {
         global.table = new Tabulator("#cashflow-table-id", {
             data: rows, 
             clipboard: true,
-            layout:"fitColumns",
-            columns:fields,
+            layout:"fitData",
+            columns:fields
         });
+        global.table.replaceData(rows);
     }
     else {
         global.table.setColumns(fields);
