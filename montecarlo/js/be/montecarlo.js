@@ -133,7 +133,7 @@ function balancePortfolio(agent, market, absoluteTime, comments) {
         capitalGain += saleCash - actualUnits*asset.costBasis;
         asset.units -= actualUnits;
         
-        comments.push(`Sold ${saleUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.`);
+        comments.push(`Sold ${actualUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.`);
 
         if (asset.units == 0) {
             agent.portfolio.splice(0, 1);
