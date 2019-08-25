@@ -291,9 +291,6 @@ function simulateRandomWalk() {
 
         // income and expense adjustments
         agent.cash += agent.earnings*timeStep;
-        agent.cash += payments.dividends;
-        agent.cash += payments.coupons;        
-        agent.cash += payments.matured;
         agent.cash += age > 67? agent.socialsecurity*timeStep : 0.0;
 
         agent.cash -= agent.expenses*timeStep;
@@ -306,15 +303,15 @@ function simulateRandomWalk() {
         // accruals
         accrued.earned += agent.earnings*timeStep;
         accrued.liquidated += liquidated;
-        accrued.matured += payments.matured;
-        accrued.coupons += payments.coupons;
-        accrued.dividends += payments.dividends;
+        accrued.matured += matured;
+        accrued.coupons += coupons;
+        accrued.dividends += dividends;
 
         accrued.spent += agent.expenses*timeStep;
         accrued.invested += invested;
 
         accrued.income += 
-            agent.earnings*timeStep + payments.coupons + payments.dividends + payments.matured + liquidated
+            agent.earnings*timeStep + coupons + dividends + matured + liquidated
             + (age > 67? agent.socialsecurity*timeStep : 0.0);
 
         accrued.expense += 
