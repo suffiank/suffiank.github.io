@@ -10,6 +10,7 @@ function refreshSimulation() {
     // collect 'trials' number of simulations
     let mctrials = []
     for (let i = 0; i < input.montecarlo.trials; i++) {
+        console.log(`On trial ${i}`);
         mctrials.push(simulateRandomWalk());
     }
 
@@ -97,14 +98,14 @@ function recievePayments(agent, securities, absoluteTime, comments) {
                         payments.dividends += asset.units * security.dividend;
                         agent.cash += asset.units * security.dividend;
 
-                        // console.log(`Got ${asset.units} x $${security.dividend} in dividends for ${asset.symbol} on ${date}`);
+                        // comments.push(`Got ${asset.units} x $${security.dividend} in dividends for ${asset.symbol} on ${date}`);
                         break;
 
                     case "bond":  
                         payments.coupons += asset.units * security.coupon;
                         agent.cash += asset.units * security.coupon;
 
-                        // console.log(`Got ${asset.units} x $${security.coupon} in coupons for ${asset.symbol} on ${date}`);
+                        // comments.push(`Got ${asset.units} x $${security.coupon} in coupons for ${asset.symbol} on ${date}`);
                         break;
                 }
 
@@ -135,7 +136,8 @@ function balancePortfolio(agent, market, absoluteTime, comments) {
 
     agent.portfolio = agent.portfolio.sort((a,b) => a.purchased < b.purchased? -1:1);
 
-    let capitalGain = 0.0, liquidated = 0.0;
+    let shortCapitalGain = 0.0, longCapitalGain = 0.0;
+    let liquidated = 0.0;
     while (agent.cash < agent.minCash && agent.portfolio.length > 0) {
 
         let asset = agent.portfolio[0];
@@ -149,8 +151,12 @@ function balancePortfolio(agent, market, absoluteTime, comments) {
 
         liquidated += saleCash;
         agent.cash += saleCash;
-        capitalGain += saleCash - actualUnits*asset.costBasis;
         asset.units -= actualUnits;
+
+        if ( (absoluteTime - asset.purchased)*global.msToYears > 1.0 )
+            longCapitalGain += saleCash - actualUnits*asset.costBasis;
+        else
+            shortCapitalGain += saleCash - actualUnits*asset.costBasis;
         
         comments.push(`Sold ${actualUnits} shares of ${asset.symbol} for $${fetchPrice.toFixed(2)} each.`);
 
@@ -178,24 +184,74 @@ function balancePortfolio(agent, market, absoluteTime, comments) {
                 purchased: absoluteTime,
             };
 
-            asset.price = +(getAssetValue(asset, market, absoluteTime).toFixed(2));
-            asset.units = Math.floor(purchaseAmount/asset.price);
+            asset.costBasis = +(getAssetValue(asset, market, absoluteTime).toFixed(2));
+            asset.units = Math.floor(purchaseAmount/asset.costBasis);
             setFakeLastPayment(asset, market.securities[asset.symbol]);
             agent.portfolio.push(asset);
 
-            let saleCost = asset.units*asset.price;
+            let saleCost = asset.units*asset.costBasis;
             investmentCost += saleCost;
             agent.cash -= saleCost;
 
-            comments.push(`Purchased ${asset.units} shares of ${symbol} at $${asset.price}.`);
+            comments.push(`Purchased ${asset.units} shares of ${symbol} at $${asset.costBasis}.`);
         }
     }
 
-    return {invested: investmentCost, liquidated: liquidated, capitalGain: capitalGain};
+    return {invested: investmentCost, liquidated: liquidated, 
+        shortGain: shortCapitalGain, longGain: longCapitalGain};
 }
 
-function payTaxes() {
+function calculateTaxes(brackets, income) {
 
+    let taxes = 0.0, covered = 0.0;
+    for (let i = 0; i < brackets.length; i++) {
+        if (income >= covered) {
+
+            let portion = Math.min(brackets[i].upto, income) - covered;
+            taxes += brackets[i].rate*portion;
+            covered += portion;
+        }
+    }
+
+    return taxes;
+}
+
+function payTaxes(agent, taxYear, earnedIncome, capitalGain) {
+
+    // need to include FICA and separate social security
+
+    // individual
+    let standardDeduction = 12200.0;
+    let federalBrackets = [
+        {rate: 0.10, upto: 9700.0},
+        {rate: 0.12, upto: 39475.0},
+        {rate: 0.22, upto: 84200.0},
+        {rate: 0.24, upto: 160725.0},
+        {rate: 0.32, upto: 204100.0},
+        {rate: 0.35, upto: 510300.0},
+        {rate: 0.37, upto: Infinity},
+    ];
+    let taxableIncome = earnedIncome - standardDeduction;
+    let earnedTaxes = calculateTaxes(federalBrackets, taxableIncome);
+
+    // long-term capital gains
+    let capitalGainBrackets = [
+        {rate: 0.10, upto: 9700.0},
+        {rate: 0.12, upto: 39475.0},
+        {rate: 0.22, upto: 84200.0},
+        {rate: 0.24, upto: 160725.0},
+        {rate: 0.32, upto: 204100.0},
+        {rate: 0.35, upto: 510300.0},
+        {rate: 0.37, upto: Infinity},
+    ];
+    let capitalTaxes = calculateTaxes(capitalGainBrackets, capitalGain);
+
+    agent.cash -= earnedTaxes + capitalTaxes;
+    agent.lastPaidTaxYear = taxYear;
+
+    // console.log(`Paying $${earnedTaxes.toFixed(2)} + $${capitalTaxes.toFixed(2)} in taxes for ${taxYear} on income of $${earnedIncome.toFixed(2)} and capital gain of $${capitalGain.toFixed(2)}`);
+
+    return {earnedTaxes: earnedTaxes, capitalTaxes: capitalTaxes};
 }
 
 function simulateRandomWalk() {
@@ -210,9 +266,11 @@ function simulateRandomWalk() {
     let nyears = agent.stopAge - agent.startAge;
     let nsteps = Math.floor(nyears/timeStep);
 
-    let today = new Date().getTime();
+    let startDay = new Date().getTime();
     let lastRecordedAt = -1e5;
-    let dead = false;
+ 
+    agent.bankrupt = false;
+    agent.lastPaidTaxYear = new Date().getFullYear() - 1;
 
     // initialize an expected last payment based on purchase date
     agent.portfolio.forEach(asset => 
@@ -229,15 +287,24 @@ function simulateRandomWalk() {
         matured: 0.0,
         invested: 0.0,
         liquidated: 0.0,
+        taxes: 0.0,
     };
+
+    let annual = {
+        earnings: 0.0,
+        capitalGain: 0.0,
+        deductions: 0.0,
+    };
+
     let comments = [];
     
     let mcwalk = [];
     for (let i = 0; i < nsteps; i++) {
 
         let relativeTime = i*timeStep;
-        let absoluteTime = today + 365*24*3600*1000*relativeTime;
+        let absoluteTime = startDay + 365*24*3600*1000*relativeTime;
         let age = agent.startAge + relativeTime;
+        let thisYear = new Date(absoluteTime).getFullYear();
 
         if (relativeTime - lastRecordedAt > input.montecarlo.recordStep) {
 
@@ -245,8 +312,8 @@ function simulateRandomWalk() {
                 getPortfolioValuations(agent.portfolio, market, absoluteTime);
 
             let assetValue = agent.cash + stockValue + bondsValue;
-            if (assetValue < 0.0) dead = true;
-            if (dead) comment += "Bankrupt :(\n"
+            if (assetValue < 0.0) agent.bankrupt = true;
+            if (agent.bankrupt) comments.push("Bankrupt :(");
 
             var point = {
                 time: new Date(absoluteTime),
@@ -268,6 +335,7 @@ function simulateRandomWalk() {
                     spent: accrued.spent,
                     income: accrued.income,
                     expense: accrued.expense,
+                    taxes: accrued.taxes,
                 },
                 comments: comments,
             }
@@ -278,7 +346,7 @@ function simulateRandomWalk() {
             lastRecordedAt = relativeTime;
             comments = [];
 
-            if (dead) break;
+            if (agent.bankrupt) break;
         }
 
         // forward market conditions by time step
@@ -289,7 +357,7 @@ function simulateRandomWalk() {
         const {dividends, coupons, matured} = 
             recievePayments(agent, market.securities, absoluteTime, comments);
 
-        // income and expense adjustments
+        // additional income and expense adjustments
         agent.cash += agent.earnings*timeStep;
         agent.cash += age > 67? agent.socialsecurity*timeStep : 0.0;
 
@@ -297,11 +365,10 @@ function simulateRandomWalk() {
         agent.cash -= age < 65? agent.healthcare*timeStep : 0.0;
 
         // buy and sell to maintain cash range
-        const {invested, liquidated, capitalGain} = 
+        const {invested, liquidated, shortGain, longGain} = 
             balancePortfolio(agent, market, absoluteTime, comments);
         
         // accruals
-        accrued.earned += agent.earnings*timeStep;
         accrued.liquidated += liquidated;
         accrued.matured += matured;
         accrued.coupons += coupons;
@@ -310,13 +377,36 @@ function simulateRandomWalk() {
         accrued.spent += agent.expenses*timeStep;
         accrued.invested += invested;
 
-        accrued.income += 
-            agent.earnings*timeStep + coupons + dividends + matured + liquidated
+        let income =  agent.earnings*timeStep + coupons + dividends + matured + liquidated
             + (age > 67? agent.socialsecurity*timeStep : 0.0);
+        accrued.income += income;
 
-        accrued.expense += 
-            agent.expenses*timeStep + invested 
-            + (age < 65? agent.healthcare*timeStep : 0.0);
+        let earnings = agent.earnings*timeStep + coupons + dividends + shortGain;
+        accrued.earned += earnings;
+
+        // accrue income or pay taxes
+        let taxes = 0.0;
+        if (thisYear == agent.lastPaidTaxYear + 1) {
+
+            annual.earnings += earnings;
+            annual.capitalGain += longGain;
+        }
+        else {
+            let taxYear = thisYear - 1;
+
+            const {earnedTaxes, capitalTaxes} = 
+                payTaxes(agent, taxYear, annual.earnings, annual.capitalGain);
+
+            taxes = earnedTaxes + capitalTaxes;
+            accrued.taxes += taxes;
+            annual.earnings = 0.0;
+            annual.capitalGain = 0.0;
+        }
+
+        let expense = agent.expenses*timeStep + invested + taxes
+            + (age < 65? agent.healthcare*timeStep : 0.0)
+
+        accrued.expense += expense;
 
         // inflation adjustment
         agent.earnings *= 1.0 + market.inflation*timeStep;

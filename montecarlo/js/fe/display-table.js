@@ -263,7 +263,7 @@ function refreshTable() {
             data: rows, 
             layout:"fitDataFill",
             clipboard: true,
-            virtualDomBuffer: 1000
+            virtualDomBuffer: 2000
         });
         global.table.replaceData(rows);
     }
