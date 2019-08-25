@@ -76,29 +76,48 @@ function evolveMarketRates(market, timeStep) {
     if (market.interest < 0.0) market.interest = 0.0;
 }
 
-function extractPayments(portfolio, securities, absoluteTime, comments) {
+function recievePayments(agent, securities, absoluteTime, comments) {
  
+    let portfolio = agent.portfolio;
+
     let payments = {dividends: 0.0, coupons: 0.0, matured: 0.0};
+    let date = new Date(absoluteTime).toLocaleDateString("en-US", global.dateFormat);
 
     let expire = [];
     portfolio.forEach((asset, index) => {
 
         let security = securities[asset.symbol];
         if (["stock", "bond"].includes(security.class) && security.paymentPeriod > 0.0) {
-            if (absoluteTime - asset.lastPaymentOn >= (365*24*3600*1000)*security.paymentPeriod) {
+
+            // does stock or bond have payout?
+            if (absoluteTime - asset.lastPaymentOn >= security.paymentPeriod*global.yearsToMs) {
                 switch (security.class) {
+
                     case "stock": 
                         payments.dividends += asset.units * security.dividend;
+                        agent.cash += asset.units * security.dividend;
+
+                        // console.log(`Got ${asset.units} x $${security.dividend} in dividends for ${asset.symbol} on ${date}`);
                         break;
+
                     case "bond":  
                         payments.coupons += asset.units * security.coupon;
+                        agent.cash += asset.units * security.coupon;
+
+                        // console.log(`Got ${asset.units} x $${security.coupon} in coupons for ${asset.symbol} on ${date}`);
                         break;
                 }
+
                 asset.lastPaymentOn = absoluteTime;
             }
+
+            // does bond mature?
             if (security.class == "bond")
-            if (absoluteTime - asset.purchased >= (365*24*3600*1000)*security.duration) {
+            if (absoluteTime - asset.purchased >= security.duration*global.yearsToMs) {
+
                 payments.matured += asset.units * security.faceValue;
+                agent.cash += asset.units * security.faceValue;
+
                 comments.push(`Matured ${asset.units} bonds at $${security.faceValue.toFixed(2)} each.`);
                 expire.push(index);
             }
@@ -191,13 +210,14 @@ function simulateRandomWalk() {
     let nyears = agent.stopAge - agent.startAge;
     let nsteps = Math.floor(nyears/timeStep);
 
-    agent.portfolio.forEach(asset =>
-        setFakeLastPayment(asset, market.securities[asset.symbol])
-    )
-
     let today = new Date().getTime();
     let lastRecordedAt = -1e5;
     let dead = false;
+
+    // initialize an expected last payment based on purchase date
+    agent.portfolio.forEach(asset => 
+        setFakeLastPayment(asset, market.securities[asset.symbol])
+    )
 
     let accrued = {
         dividends: 0.0,
@@ -210,7 +230,6 @@ function simulateRandomWalk() {
         invested: 0.0,
         liquidated: 0.0,
     };
-
     let comments = [];
     
     let mcwalk = [];
@@ -262,13 +281,13 @@ function simulateRandomWalk() {
             if (dead) break;
         }
 
-        // random walk
+        // forward market conditions by time step
         evolveSecurities(market, timeStep);
         evolveMarketRates(market, timeStep);
 
-        // coupons and dividends
-        let payments = 
-            extractPayments(agent.portfolio, market.securities, absoluteTime, comments);
+        // dividends, coupons, and matured bonds
+        const {dividends, coupons, matured} = 
+            recievePayments(agent.portfolio, market.securities, absoluteTime, comments);
 
         // income and expense adjustments
         agent.cash += agent.earnings*timeStep;
@@ -313,7 +332,11 @@ function simulateRandomWalk() {
 function setFakeLastPayment(asset, security) {
 
     let startOfYear = new Date(new Date(asset.purchased).getFullYear(), 0, 1).getTime();
-    asset.lastPaymentOn = startOfYear + security.paymentDelay*global.yearsToMs;
+    let referencePaymentOn = startOfYear + security.paymentDelay*global.yearsToMs;
+
+    let f = 1.0/security.paymentPeriod;
+    let n = Math.floor( (asset.purchased - referencePaymentOn)*global.msToYears*f );
+    asset.lastPaymentOn = referencePaymentOn + n*security.paymentPeriod*global.yearsToMs;
 }
 
 function getAssetValue(asset, market, absoluteTime) {

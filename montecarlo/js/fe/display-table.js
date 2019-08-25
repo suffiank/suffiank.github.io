@@ -17,7 +17,7 @@ function getCommentHtml(lines, expand) {
     return comment;
 }
 
-function setCommentExpansion(index, expand) {
+async function setCommentExpansion(index, expand) {
 
     let row = global.table.getRow(index);
 
@@ -26,13 +26,11 @@ function setCommentExpansion(index, expand) {
         .split(/<[\/]*div[^>]*>/g)
         .filter(line => line.length > 0);
 
-    global.table.updateData([{
+    return global.table.updateData([{
         id: index, 
         expander: lines.length > 1? (expand? "-" : "+") : "",
         comment: getCommentHtml(lines, expand)
-    }]);
-
-    row.normalizeHeight();
+    }]).then(row.normalizeHeight());
 }
 
 function toggleCellComment(cell) {
@@ -42,7 +40,7 @@ function toggleCellComment(cell) {
     setCommentExpansion(index, expand);
 }
 
-function toggleComments() {
+async function toggleComments() {
 
     let table = global.table;
     let header = document.getElementById("comment-expander-id");
@@ -51,7 +49,7 @@ function toggleComments() {
 
     let nrows = global.table.getDataCount();
     for (let index = 0; index < nrows; index++)
-        setCommentExpansion(index, expand);
+        await setCommentExpansion(index, expand);
 }
 
 function toggleCashFlows() {
@@ -96,12 +94,13 @@ function getColumns(percentile) {
         formatterParams: {symbol: "$"}
     }
 
+    defaults.minWidth = 80;
     addColumn(valueColumns, defaults, {title: 'Assets', field: 'assetValue'});
     addColumn(valueColumns, defaults, {title: 'Cash', field: 'cash'});
     addColumn(valueColumns, defaults, {title: 'Bonds', field: 'bondsValue'});
     addColumn(valueColumns, defaults, {title: 'Stocks', field: 'stockValue'});
     addColumn(cashflowColumns, defaults, {title: 'Income', field: 'income'});
-    addColumn(cashflowColumns, defaults, {title: 'Expense', field: 'expense'});
+    addColumn(cashflowColumns, defaults, {title: 'Expenses', field: 'expense'});
 
     defaults.minWidth = 60;
     defaults.visible = false;
@@ -204,8 +203,7 @@ function getRows(percentile) {
         const printStep = global.input.display.printStep
         if (relativeTime - lastPrintedAt >= printStep || t == mcwalk.length-1) {
 
-            const dateFormat = {year: 'numeric', month: '2-digit', day: '2-digit'};
-            let date = mcwalk[t].time.toLocaleDateString("en-US", dateFormat);
+            let date = mcwalk[t].time.toLocaleDateString("en-US", global.dateFormat);
 
             let row = {id: rows.length, date: date};
             row.age = Math.floor(global.input.agent.startAge + relativeTime);
