@@ -287,7 +287,7 @@ function simulateRandomWalk() {
 
         // dividends, coupons, and matured bonds
         const {dividends, coupons, matured} = 
-            recievePayments(agent.portfolio, market.securities, absoluteTime, comments);
+            recievePayments(agent, market.securities, absoluteTime, comments);
 
         // income and expense adjustments
         agent.cash += agent.earnings*timeStep;
