@@ -6,6 +6,8 @@ var global;
 function refreshSimulation() {
    
     let input = global.input;
+    global.timings = {};
+    global.clockedAt = performance.now();
 
     // collect 'trials' number of simulations
     let mctrials = []
@@ -254,6 +256,21 @@ function payTaxes(agent, taxYear, earnedIncome, capitalGain) {
     return {earnedTaxes: earnedTaxes, capitalTaxes: capitalTaxes};
 }
 
+function collectElapsed(segmentTag) {
+
+    let now = performance.now();
+
+    if (!(segmentTag in global.timings))
+        global.timings[segmentTag] = {elapsed: 0.0, count: 0, mean: 0.0};
+    let segment = global.timings[segmentTag];
+
+    segment.elapsed += now - global.clockedAt;
+    segment.count += 1;
+    segment.mean = segment.elapsed / segment.count;
+
+    global.clockedAt = performance.now();    
+}
+
 function simulateRandomWalk() {
 
     let input = global.input;
@@ -302,6 +319,8 @@ function simulateRandomWalk() {
     let mcwalk = [];
     for (let i = 0; i < nsteps; i++) {
 
+        global.clockedAt = performance.now();
+
         let relativeTime = i*timeStep;
         let absoluteTime = startDay + 365*24*3600*1000*relativeTime;
         let age = agent.startAge + relativeTime;
@@ -349,15 +368,21 @@ function simulateRandomWalk() {
             comments = [];
 
             if (agent.bankrupt) break;
+
+            collectElapsed("record-step");
         }
 
         // forward market conditions by time step
         evolveSecurities(market, timeStep);
         evolveMarketRates(market, timeStep);
 
+        collectElapsed("evolve-market");
+
         // dividends, coupons, and matured bonds
         const {dividends, coupons, matured} = 
             recieveSecuritiesPayouts(agent, market, absoluteTime, comments);
+
+        collectElapsed("recieve-payouts");
 
         // additional income and expense adjustments
         agent.cash += agent.earnings*timeStep;
@@ -369,6 +394,8 @@ function simulateRandomWalk() {
         // buy and sell to maintain cash range
         const {invested, liquidated, shortGain, longGain} = 
             balanceCashToInvestments(agent, market, absoluteTime, comments);
+
+        collectElapsed("balance-cash");
         
         // accruals
         accrued.liquidated += liquidated;
@@ -385,6 +412,8 @@ function simulateRandomWalk() {
 
         let earnings = agent.earnings*timeStep + coupons + dividends + shortGain;
         accrued.earned += earnings;
+
+        collectElapsed("accrue-flows");
 
         // accrue income or pay taxes
         let taxes = 0.0;
@@ -405,6 +434,8 @@ function simulateRandomWalk() {
             annual.capitalGain = 0.0;
         }
 
+        collectElapsed("pay-taxes");
+
         let expense = agent.expenses*timeStep + invested + taxes
             + (age < 65? agent.healthcare*timeStep : 0.0)
 
@@ -414,8 +445,18 @@ function simulateRandomWalk() {
         // inflation adjustment
         agent.earnings *= 1.0 + market.inflation*timeStep;
         agent.expenses *= 1.0 + market.inflation*timeStep;
+
+        collectElapsed("accrue-expense");
     }
 
+    for (let segmentTag in global.timings) {
+
+        let segment = global.timings[segmentTag];
+        let elapsed = (segment.elapsed/1000.0).toFixed(3);
+        let calls = segment.count;
+
+        console.log(`Segment '${segmentTag}' took ${elapsed} sec over ${calls} calls`);
+    }
     return mcwalk;
 }
 
