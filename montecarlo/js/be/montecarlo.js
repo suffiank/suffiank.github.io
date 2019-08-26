@@ -77,9 +77,10 @@ function evolveMarketRates(market, timeStep) {
     if (market.interest < 0.0) market.interest = 0.0;
 }
 
-function recievePayments(agent, securities, absoluteTime, comments) {
+function recieveSecuritiesPayouts(agent, market, absoluteTime, comments) {
  
     let portfolio = agent.portfolio;
+    let securities = market.securities;
 
     let payments = {dividends: 0.0, coupons: 0.0, matured: 0.0};
     let date = new Date(absoluteTime).toLocaleDateString("en-US", global.dateFormat);
@@ -125,6 +126,7 @@ function recievePayments(agent, securities, absoluteTime, comments) {
         }
     });
 
+    // remove matured bonds
     while (expire.length) {
         portfolio.splice(expire.pop(), 1);
     }
@@ -132,7 +134,7 @@ function recievePayments(agent, securities, absoluteTime, comments) {
     return payments;
 }
 
-function balancePortfolio(agent, market, absoluteTime, comments) {
+function balanceCashToInvestments(agent, market, absoluteTime, comments) {
 
     agent.portfolio = agent.portfolio.sort((a,b) => a.purchased < b.purchased? -1:1);
 
@@ -249,8 +251,6 @@ function payTaxes(agent, taxYear, earnedIncome, capitalGain) {
     agent.cash -= earnedTaxes + capitalTaxes;
     agent.lastPaidTaxYear = taxYear;
 
-    // console.log(`Paying $${earnedTaxes.toFixed(2)} + $${capitalTaxes.toFixed(2)} in taxes for ${taxYear} on income of $${earnedIncome.toFixed(2)} and capital gain of $${capitalGain.toFixed(2)}`);
-
     return {earnedTaxes: earnedTaxes, capitalTaxes: capitalTaxes};
 }
 
@@ -271,7 +271,6 @@ function simulateRandomWalk() {
  
     agent.bankrupt = false;
     agent.lastPaidTaxYear = new Date().getFullYear() - 1;
-    console.log(`Start by having paid taxes in ${agent.lastPaidTaxYear}`);
 
     // initialize an expected last payment based on purchase date
     agent.portfolio.forEach(asset => 
@@ -279,6 +278,7 @@ function simulateRandomWalk() {
     )
 
     let accrued = {
+        cashflow: 0.0,
         dividends: 0.0,
         coupons: 0.0,
         income: 0.0,
@@ -337,6 +337,7 @@ function simulateRandomWalk() {
                     income: accrued.income,
                     expense: accrued.expense,
                     taxes: accrued.taxes,
+                    cashflow: accrued.cashflow,
                 },
                 comments: comments,
             }
@@ -356,7 +357,7 @@ function simulateRandomWalk() {
 
         // dividends, coupons, and matured bonds
         const {dividends, coupons, matured} = 
-            recievePayments(agent, market.securities, absoluteTime, comments);
+            recieveSecuritiesPayouts(agent, market, absoluteTime, comments);
 
         // additional income and expense adjustments
         agent.cash += agent.earnings*timeStep;
@@ -367,7 +368,7 @@ function simulateRandomWalk() {
 
         // buy and sell to maintain cash range
         const {invested, liquidated, shortGain, longGain} = 
-            balancePortfolio(agent, market, absoluteTime, comments);
+            balanceCashToInvestments(agent, market, absoluteTime, comments);
         
         // accruals
         accrued.liquidated += liquidated;
@@ -408,6 +409,7 @@ function simulateRandomWalk() {
             + (age < 65? agent.healthcare*timeStep : 0.0)
 
         accrued.expense += expense;
+        accrued.cashflow += income - expense;
 
         // inflation adjustment
         agent.earnings *= 1.0 + market.inflation*timeStep;

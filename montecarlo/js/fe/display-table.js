@@ -80,8 +80,7 @@ function getColumns(percentile) {
     addColumn(valueColumns, defaults, {title: 'Cash', field: 'cash'});
     addColumn(valueColumns, defaults, {title: 'Bonds', field: 'bondsValue'});
     addColumn(valueColumns, defaults, {title: 'Stocks', field: 'stockValue'});
-    addColumn(cashflowColumns, defaults, {title: 'Income', field: 'income'});
-    addColumn(cashflowColumns, defaults, {title: 'Expenses', field: 'expense'});
+    addColumn(cashflowColumns, defaults, {title: 'Cashflow', field: 'cashflow'});
 
     defaults.width = 90;
     if (global.expandAccruals) {
@@ -91,7 +90,7 @@ function getColumns(percentile) {
         addColumn(cashflowColumns, defaults, {title: 'Coupons', field: 'coupons'})
         addColumn(cashflowColumns, defaults, {title: 'Dividends', field: 'dividends'});
         addColumn(cashflowColumns, defaults, {title: 'Matured', field: 'matured'});
-        addColumn(cashflowColumns, defaults, {title: 'Liquidated', field: 'liquidated'});
+        addColumn(cashflowColumns, defaults, {title: 'Sold', field: 'liquidated'});
         addColumn(cashflowColumns, defaults, {title: 'Invested', field: 'invested'});
         addColumn(cashflowColumns, defaults, {title: 'Taxes', field: 'taxes'});
     }
@@ -112,9 +111,9 @@ function getColumns(percentile) {
         columns: valueColumns
     });
 
-    let expandToken = global.expandAccruals? '-' : '+';
+    let cashflowHeader = global.expandAccruals? '- Flows' : '+ Flows';
     fields.push({
-        title: `<div id="cashflow-expander-id" style="cursor: pointer;">${expandToken} Agent Cash Flows</div>`,
+        title: `<div id="cashflow-expander-id" style="cursor: pointer;">${cashflowHeader}</div>`,
         columns: cashflowColumns,
         headerClick: (e, column) => toggleCashFlows(),
     });
@@ -124,7 +123,7 @@ function getColumns(percentile) {
         columns: marketColumns
     });
 
-    expandToken = global.expandComments? '-' : '+';
+    let expandToken = global.expandComments? '-' : '+';
     fields.push({
         title: "",
         columns: [
