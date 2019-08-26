@@ -271,6 +271,7 @@ function simulateRandomWalk() {
  
     agent.bankrupt = false;
     agent.lastPaidTaxYear = new Date().getFullYear() - 1;
+    console.log(`Start by having paid taxes in ${agent.lastPaidTaxYear}`);
 
     // initialize an expected last payment based on purchase date
     agent.portfolio.forEach(asset => 
