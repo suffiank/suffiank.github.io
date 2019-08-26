@@ -85,7 +85,6 @@ function recieveSecuritiesPayouts(agent, market, absoluteTime, comments) {
     let securities = market.securities;
 
     let payments = {dividends: 0.0, coupons: 0.0, matured: 0.0};
-    let date = new Date(absoluteTime).toLocaleDateString("en-US", global.dateFormat);
 
     let expire = [];
     portfolio.forEach((asset, index) => {
@@ -100,15 +99,11 @@ function recieveSecuritiesPayouts(agent, market, absoluteTime, comments) {
                     case "stock": 
                         payments.dividends += asset.units * security.dividend;
                         agent.cash += asset.units * security.dividend;
-
-                        // comments.push(`Got ${asset.units} x $${security.dividend} in dividends for ${asset.symbol} on ${date}`);
                         break;
 
                     case "bond":  
                         payments.coupons += asset.units * security.coupon;
                         agent.cash += asset.units * security.coupon;
-
-                        // comments.push(`Got ${asset.units} x $${security.coupon} in coupons for ${asset.symbol} on ${date}`);
                         break;
                 }
 
