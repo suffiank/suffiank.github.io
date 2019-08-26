@@ -1,8 +1,6 @@
 "use strict";
 var global = {};
 
-global.expandComments = true;
-
 function getCommentHtml(lines, expand) {
 
     let display = expand? 'inline' : 'none';
@@ -42,31 +40,14 @@ function toggleCellComment(cell) {
 
 async function toggleComments() {
 
-    let table = global.table;
-    let header = document.getElementById("comment-expander-id");
-    let expand = header.innerHTML == "+";
-    header.innerHTML = expand? "-" : "+";
-
-    let nrows = global.table.getDataCount();
-    for (let index = 0; index < nrows; index++)
-        await setCommentExpansion(index, expand);
+    global.expandComments = !global.expandComments;
+    await refreshTable();
 }
 
 function toggleCashFlows() {
 
-    global.table.getColumn('earned').toggle();
-    global.table.getColumn('spent').toggle();
-    global.table.getColumn('coupons').toggle();
-    global.table.getColumn('dividends').toggle();
-    global.table.getColumn('matured').toggle();
-    global.table.getColumn('invested').toggle();
-    global.table.getColumn('liquidated').toggle();
-    global.table.getColumn('taxes').toggle();
-
-    let header = document.getElementById("cashflow-expander-id");
-    let expand = header.innerHTML.indexOf('+') >= 0;
-    header.innerHTML = 
-        header.innerHTML.replace(expand? '+':'-', expand? '-':'+');
+    global.expandAccruals = !global.expandAccruals;
+    refreshTable();
 }
 
 function getColumns(percentile) {
@@ -94,7 +75,7 @@ function getColumns(percentile) {
         formatterParams: {symbol: "$"}
     }
 
-    defaults.minWidth = 80;
+    defaults.width = 90;
     addColumn(valueColumns, defaults, {title: 'Assets', field: 'assetValue'});
     addColumn(valueColumns, defaults, {title: 'Cash', field: 'cash'});
     addColumn(valueColumns, defaults, {title: 'Bonds', field: 'bondsValue'});
@@ -102,16 +83,18 @@ function getColumns(percentile) {
     addColumn(cashflowColumns, defaults, {title: 'Income', field: 'income'});
     addColumn(cashflowColumns, defaults, {title: 'Expenses', field: 'expense'});
 
-    defaults.minWidth = 60;
-    defaults.visible = false;
-    addColumn(cashflowColumns, defaults, {title: 'Earned', field: 'earned'})
-    addColumn(cashflowColumns, defaults, {title: 'Spent', field: 'spent'})
-    addColumn(cashflowColumns, defaults, {title: 'Coupons', field: 'coupons'})
-    addColumn(cashflowColumns, defaults, {title: 'Dividends', field: 'dividends'});
-    addColumn(cashflowColumns, defaults, {title: 'Matured', field: 'matured'});
-    addColumn(cashflowColumns, defaults, {title: 'Liquidated', field: 'liquidated'});
-    addColumn(cashflowColumns, defaults, {title: 'Invested', field: 'invested'});
-    addColumn(cashflowColumns, defaults, {title: 'Taxes', field: 'taxes'});
+    defaults.width = 90;
+    if (global.expandAccruals) {
+
+        addColumn(cashflowColumns, defaults, {title: 'Earned', field: 'earned'})
+        addColumn(cashflowColumns, defaults, {title: 'Spent', field: 'spent'})
+        addColumn(cashflowColumns, defaults, {title: 'Coupons', field: 'coupons'})
+        addColumn(cashflowColumns, defaults, {title: 'Dividends', field: 'dividends'});
+        addColumn(cashflowColumns, defaults, {title: 'Matured', field: 'matured'});
+        addColumn(cashflowColumns, defaults, {title: 'Liquidated', field: 'liquidated'});
+        addColumn(cashflowColumns, defaults, {title: 'Invested', field: 'invested'});
+        addColumn(cashflowColumns, defaults, {title: 'Taxes', field: 'taxes'});
+    }
 
     defaults.visible = true;
     addColumn(marketColumns, defaults, {title: 'S&P 500', field: 'spyPrice'});
@@ -129,8 +112,9 @@ function getColumns(percentile) {
         columns: valueColumns
     });
 
+    let expandToken = global.expandAccruals? '-' : '+';
     fields.push({
-        title: `<div id="cashflow-expander-id" style="cursor: pointer;">+ Agent Cash Flows</div>`,
+        title: `<div id="cashflow-expander-id" style="cursor: pointer;">${expandToken} Agent Cash Flows</div>`,
         columns: cashflowColumns,
         headerClick: (e, column) => toggleCashFlows(),
     });
@@ -140,11 +124,12 @@ function getColumns(percentile) {
         columns: marketColumns
     });
 
+    expandToken = global.expandComments? '-' : '+';
     fields.push({
         title: "",
         columns: [
-            {
-                title: '<div id="comment-expander-id" style="cursor: pointer;">-</div>',
+            {                
+                title: `<div id="comment-expander-id" style="cursor: pointer;">${expandToken}</div>`,
                 field: 'expander',
                 headerSort: false,
                 width: 22,
@@ -227,8 +212,9 @@ function getRows(percentile) {
                         break;
 
                     case 'comments':
-                        row.comment = getCommentHtml(comments, true);
-                        row.expander = comments.length > 1? "-":"";
+                        let expand = global.expandComments;
+                        row.comment = getCommentHtml(comments, expand);
+                        row.expander = comments.length > 1? (expand? '-' : '+'): '';
                         break;
 
                     default:
@@ -249,6 +235,13 @@ function getRows(percentile) {
 }
 
 function refreshTable() {
+
+    // define globals
+    if (typeof global.expandComments === 'undefined') {
+
+        global.expandComments = true;
+        global.expandAccruals = false;
+    }
 
     // retrieve Monte Carlo simulation at requested percentile
     let percentile = global.input.display.percentile;
