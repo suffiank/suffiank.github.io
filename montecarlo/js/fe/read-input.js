@@ -168,11 +168,3 @@ function getStartPortfolio () {
 
     return portfolio;
 }
-
-/* need to remove:
-let today = new Date().getTime();
-let startOfYear = new Date(new Date().getFullYear(), 0, 1).getTime();
-
-let f = market.securities['SPY'].frequency;
-let n = Math.floor( (today - startOfYear)*msToYears*f );
-assetStockMarket.lastPaymentOn = startOfYear + yearsToMs*n/f; */

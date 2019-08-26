@@ -50,6 +50,38 @@ function toggleCashFlows() {
     refreshTable();
 }
 
+function asColoredDollars(cell, reverse = false) {
+
+    let amount = cell.getValue();
+
+    let condition = amount >= 0.0;
+    if (reverse) condition = !condition;
+
+    cell.getElement().style.color = 
+        condition? '#007700' : '#770000';
+
+    return asUsdDollars(cell);
+}
+
+function asUsdDollars(cell) {
+
+    let amount = cell.getValue();
+
+    let content = 
+        parseFloat(Math.abs(amount)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");        
+    content = '$' + (amount >= 0.0? content : '(' + content + ')');
+    return content;
+}
+
+function asColoredRate(cell) {
+
+    let rate = cell.getValue();
+    cell.getElement().style.color = rate >= 0.0? '#007700' : '#770000';
+
+    return asRate(rate);
+}
+
+
 function getColumns(percentile) {
 
     let addColumn = (columnListing, defaults, column) => 
@@ -61,8 +93,8 @@ function getColumns(percentile) {
     };
 
     let fields = [];
-    addColumn(fields, {title: "Date", field: "date"}, defaults);
-    addColumn(fields, {title: "Age", field: "age"}, defaults);
+    addColumn(fields, {title: "Date", field: "date", width: 85}, defaults);
+    addColumn(fields, {title: "Age", field: "age", width: 42}, defaults);
 
     let valueColumns = [];
     let cashflowColumns = [];
@@ -71,37 +103,47 @@ function getColumns(percentile) {
     defaults = {
         align: 'right', 
         headerSort: false, 
-        formatter: "money", 
-        formatterParams: {symbol: "$"}
+        formatter: (cell, formatterParams) => asUsdDollars(cell), 
     }
 
-    defaults.width = 90;
+    defaults.width = 110;
     addColumn(valueColumns, defaults, {title: 'Assets', field: 'assetValue'});
     addColumn(valueColumns, defaults, {title: 'Cash', field: 'cash'});
     addColumn(valueColumns, defaults, {title: 'Bonds', field: 'bondsValue'});
     addColumn(valueColumns, defaults, {title: 'Stocks', field: 'stockValue'});
+
+    defaults.formatter = (cell, formatterParams) => asColoredDollars(cell);
     addColumn(cashflowColumns, defaults, {title: 'Cashflow', field: 'cashflow'});
 
-    defaults.width = 90;
+    defaults.formatter = (cell, formatterParams) => asColoredRate(cell);
+    addColumn(cashflowColumns, defaults, {title: 'Growth', field: 'growth', width: 70});
+
     if (global.expandAccruals) {
 
+        defaults.width = 90;
+        defaults.formatter = (cell, formatterParams) => asColoredDollars(cell);
         addColumn(cashflowColumns, defaults, {title: 'Earned', field: 'earned'})
         addColumn(cashflowColumns, defaults, {title: 'Spent', field: 'spent'})
         addColumn(cashflowColumns, defaults, {title: 'Coupons', field: 'coupons'})
         addColumn(cashflowColumns, defaults, {title: 'Dividends', field: 'dividends'});
         addColumn(cashflowColumns, defaults, {title: 'Matured', field: 'matured'});
         addColumn(cashflowColumns, defaults, {title: 'Sold', field: 'liquidated'});
+
+        defaults.formatter = (cell, formatterParams) => asColoredDollars(cell, true);
         addColumn(cashflowColumns, defaults, {title: 'Invested', field: 'invested'});
         addColumn(cashflowColumns, defaults, {title: 'Taxes', field: 'taxes'});
     }
 
     defaults.visible = true;
+    defaults.width = 80;
+    defaults.formatter = (cell, formatterParams) => asUsdDollars(cell);
     addColumn(marketColumns, defaults, {title: 'S&P 500', field: 'spyPrice'});
 
     defaults = {
         align: 'right',
         headerSort: false,
         formatter: (cell, formatterParams) => asRate(cell.getValue()),
+        width: 75,
     }
 
     addColumn(marketColumns, defaults, {title: 'Interest', field: 'interest'});
@@ -132,7 +174,6 @@ function getColumns(percentile) {
                 field: 'expander',
                 headerSort: false,
                 width: 22,
-                minWidth: 22,
                 align: 'center',
                 formatter: 'html',
                 cellClick: (e, cell) => toggleCellComment(cell),
@@ -165,6 +206,7 @@ function getRows(percentile) {
 
     let accrued = {};
     let comments = [];
+    let lastAssetValue = mcwalk.length > 0? mcwalk[0].assetValue : 0.0;
 
     let rows = [];
     for (let t = 0; t < mcwalk.length; t++) {
@@ -198,11 +240,16 @@ function getRows(percentile) {
                     case 'cash':
                     case 'bondsValue':
                     case 'stockValue':
-                    case 'assetValue':
                     case 'interest':
                     case 'spyPrice':
                     case 'inflation':
                         row[property] = parseFloat(mcwalk[t][property]);
+                        break;
+
+                    case 'assetValue':
+                        row.assetValue = parseFloat(mcwalk[t]['assetValue']);
+                        row.growth = (row.assetValue - lastAssetValue)/lastAssetValue;
+                        lastAssetValue = row.assetValue;
                         break;
 
                     case 'accrued':
@@ -253,15 +300,16 @@ function refreshTable() {
         global.table = new Tabulator("#cashflow-table-id", {
             columns:fields,
             data: rows, 
-            layout:"fitDataFill",
+            layout:"fitColumns",
             clipboard: true,
             virtualDomBuffer: 2000
         });
-        global.table.replaceData(rows);
+        global.table.redraw();
     }
     else {
 
         global.table.setColumns(fields);
         global.table.replaceData(rows);
+        global.table.redraw();
     }
 }

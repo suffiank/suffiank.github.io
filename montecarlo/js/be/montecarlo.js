@@ -9,11 +9,21 @@ function refreshSimulation() {
     global.timings = {};
     global.clockedAt = performance.now();
 
-    // collect 'trials' number of simulations
+    // perform an ensemble of simulations
     let mctrials = []
     for (let i = 0; i < input.montecarlo.trials; i++) {
         console.log(`On trial ${i}`);
         mctrials.push(simulateRandomWalk());
+    }
+
+    // log performance statistics
+    for (let segmentTag in global.timings) {
+
+        let segment = global.timings[segmentTag];
+        let elapsed = (segment.elapsed/1000.0).toFixed(3);
+        let calls = segment.count;
+
+        console.log(`Segment '${segmentTag}' took ${elapsed} sec over ${calls} calls`);
     }
 
     // sort trials by survival and time-average fair value
@@ -444,14 +454,6 @@ function simulateRandomWalk() {
         collectElapsed("accrue-expense");
     }
 
-    for (let segmentTag in global.timings) {
-
-        let segment = global.timings[segmentTag];
-        let elapsed = (segment.elapsed/1000.0).toFixed(3);
-        let calls = segment.count;
-
-        console.log(`Segment '${segmentTag}' took ${elapsed} sec over ${calls} calls`);
-    }
     return mcwalk;
 }
 
