@@ -17,13 +17,15 @@ function refreshSimulation() {
     let input = global.input;
     global.timings = {};
     global.clockedAt = performance.now();
+    let trials = input.montecarlo.trials;
 
     // perform an ensemble of simulations
     let mctrials = []
-    for (let i = 0; i < input.montecarlo.trials; i++) {
+    for (let i = 0; i < trials; i++) {
         self.postMessage({notice: 'trial-update', index: i});
         mctrials.push(simulateRandomWalk());
     }
+    self.postMessage({notice: 'trial-update', index: trials});
 
     // log performance statistics
     for (let segmentTag in global.timings) {
