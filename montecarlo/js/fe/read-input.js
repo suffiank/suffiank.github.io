@@ -5,20 +5,44 @@ var global = {};
 // relative time and durations expressed as fraction of years.
 global.yearsToMs = 1000*3600*24*365;
 global.msToYears = 1.0/global.yearsToMs;
+global.dateFormat = {year: 'numeric', month: '2-digit', day: '2-digit'};
 
 function onPageLoad() {
 
     onSimulate();
 }
 
+function launchWorker() {
+    return new Worker(
+        URL.createObjectURL(
+            new Blob(["("+workerCodeWrap.toString()+")()"], 
+            {type: 'text/javascript'}
+        )
+    ));
+}
+
 function onSimulate() {
 
     refreshInputs();
     refreshPercentileText();
-    refreshSimulation();
 
-    refreshGraph();
-    refreshTable();
+    if (typeof global.worker  === 'undefined') {
+        global.worker = launchWorker();
+        global.worker.addEventListener('message', recieveWorkerMessage, false);
+    }
+
+    global.worker.postMessage({command: 'simulate', input: global.input});
+}
+
+function recieveWorkerMessage(event) {
+
+    switch (event.data.notice) {
+        case 'done':
+            global.mctrials = event.data.mctrials;
+            refreshGraph();
+            refreshTable();
+            break;
+    }
 }
 
 function onPercentileChange() {

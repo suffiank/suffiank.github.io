@@ -1,8 +1,17 @@
 
 "use strict";
 
-var global;
+// workaround to use worker with local files
+// https://stackoverflow.com/questions/21408510/chrome-cant-load-web-worker
+function workerCodeWrap() {
 
+    var global = {};
+    global.yearsToMs = 1000*3600*24*365;
+    global.msToYears = 1.0/global.yearsToMs;
+    
+    self.addEventListener('message', handleCommand, false);
+
+// begin code .. 
 function refreshSimulation() {
    
     let input = global.input;
@@ -12,7 +21,7 @@ function refreshSimulation() {
     // perform an ensemble of simulations
     let mctrials = []
     for (let i = 0; i < input.montecarlo.trials; i++) {
-        console.log(`On trial ${i}`);
+        self.postMessage({notice: 'trial-update', index: i});
         mctrials.push(simulateRandomWalk());
     }
 
@@ -261,7 +270,7 @@ function payTaxes(agent, taxYear, earnedIncome, capitalGain) {
     return {earnedTaxes: earnedTaxes, capitalTaxes: capitalTaxes};
 }
 
-function collectElapsed(segmentTag) {
+function accrueElapsed(segmentTag) {
 
     let now = performance.now();
 
@@ -374,20 +383,20 @@ function simulateRandomWalk() {
 
             if (agent.bankrupt) break;
 
-            collectElapsed("record-step");
+            accrueElapsed("record-step");
         }
 
         // forward market conditions by time step
         evolveSecurities(market, timeStep);
         evolveMarketRates(market, timeStep);
 
-        collectElapsed("evolve-market");
+        accrueElapsed("evolve-market");
 
         // dividends, coupons, and matured bonds
         const {dividends, coupons, matured} = 
             recieveSecuritiesPayouts(agent, market, absoluteTime, comments);
 
-        collectElapsed("recieve-payouts");
+        accrueElapsed("recieve-payouts");
 
         // additional income and expense adjustments
         agent.cash += agent.earnings*timeStep;
@@ -400,7 +409,7 @@ function simulateRandomWalk() {
         const {invested, liquidated, shortGain, longGain} = 
             balanceCashToInvestments(agent, market, absoluteTime, comments);
 
-        collectElapsed("balance-cash");
+        accrueElapsed("balance-cash");
         
         // accruals
         accrued.liquidated += liquidated;
@@ -418,7 +427,7 @@ function simulateRandomWalk() {
         let earnings = agent.earnings*timeStep + coupons + dividends + shortGain;
         accrued.earned += earnings;
 
-        collectElapsed("accrue-flows");
+        accrueElapsed("accrue-flows");
 
         // accrue income or pay taxes
         let taxes = 0.0;
@@ -439,7 +448,7 @@ function simulateRandomWalk() {
             annual.capitalGain = 0.0;
         }
 
-        collectElapsed("pay-taxes");
+        accrueElapsed("pay-taxes");
 
         let expense = agent.expenses*timeStep + invested + taxes
             + (age < 65? agent.healthcare*timeStep : 0.0)
@@ -451,7 +460,7 @@ function simulateRandomWalk() {
         agent.earnings *= 1.0 + market.inflation*timeStep;
         agent.expenses *= 1.0 + market.inflation*timeStep;
 
-        collectElapsed("accrue-expense");
+        accrueElapsed("accrue-expense");
     }
 
     return mcwalk;
@@ -497,3 +506,17 @@ function getBondValue(bondAsset, bondIssue, absoluteTime, interest) {
     value += bondIssue.faceValue / Math.pow(1.0 + interest, t1);
     return value;
 }
+
+// message handler
+function handleCommand(event) {
+
+    switch(event.data.command) {
+        case 'simulate':
+            global.input = event.data.input;
+            refreshSimulation();
+            self.postMessage({notice: 'done', mctrials: global.mctrials});
+            break;
+    }
+}
+
+} // end worker code wrapper
