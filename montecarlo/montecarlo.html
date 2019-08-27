@@ -25,7 +25,7 @@
         </div>
         <div>
             <p class="parameter-text">trials</p>
-            <input class="parameter-box" type="number" name="trials" id="trials" value="1" min="0" max="100000" step="1">
+            <input class="parameter-box" type="number" name="trials" id="trials" value="25" min="0" max="100000" step="1">
         </div>
         <div>
             <p class="parameter-text">simulation step</p>
@@ -161,6 +161,9 @@
         <div class="graph-canvas">
             <canvas id="graph-canvas-id"></canvas>
         </div>
+        <div class="simulation-progress">
+            <div id="simulation-progress-id"></div>
+        </div>
     </div>
 
     <!-- cashflow display --> 
@@ -175,7 +178,7 @@
     <script src="js/be/montecarlo.js"></script>
     <script src="js/fe/display-graph.js"></script>
     <script src="js/fe/display-table.js"></script>
-    <script src="js/fe/read-input.js"></script>
+    <script src="js/fe/handle-input.js"></script>
 
 </body>
 </html>

@@ -66,6 +66,16 @@ html, body {
     width: calc(100vw - var(--input-pane-width) - 5px);
     z-index: 2;
 }
+.simulation-progress {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: var(--graph-pane-height);
+    width: calc(100vw - var(--input-pane-width) - 5px);
+    text-align: center;
+    line-height: var(--graph-pane-height); /* vertical align */
+    z-index: 1;
+}
 .cashflow-pane {
     display: flex;
     position: absolute;
