@@ -174,6 +174,7 @@ function getColumns(percentile) {
                 field: 'expander',
                 headerSort: false,
                 width: 22,
+                minWidth: 22,
                 align: 'center',
                 formatter: 'html',
                 cellClick: (e, cell) => toggleCellComment(cell),
@@ -186,7 +187,8 @@ function getColumns(percentile) {
                 formatter:"html",
                 headerClick: (e, column) => toggleComments(),
                 headerSort: false, 
-                widthGrow: 1
+                widthGrow: 1,
+                minWidth: 250
             },
         ]
     });
@@ -300,9 +302,10 @@ function refreshTable() {
         global.table = new Tabulator("#cashflow-table-id", {
             columns:fields,
             data: rows, 
-            layout:"fitColumns",
+            layout:"fitDataFill",
             clipboard: true,
-            virtualDomBuffer: 2000
+            virtualDomBuffer: 2000,
+            layoutColumnsOnNewData:true
         });
         global.table.redraw();
     }
