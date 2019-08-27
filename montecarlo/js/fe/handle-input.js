@@ -60,7 +60,7 @@ function recieveWorkerMessage(event) {
             if (index < global.input.montecarlo.trials)
                 progressDisplay.innerHTML = `Simulating trial ${index} ..`;
             else
-                progressDisplay.innerHTML = `Sorting and transfering results ..`;
+                progressDisplay.innerHTML = `Sorting, transferring results ..`;
 
             progressDisplay.style.display = 'inline';
             graphDisplay.style.display = 'none';

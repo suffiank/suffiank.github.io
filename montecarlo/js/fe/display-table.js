@@ -58,7 +58,7 @@ function asColoredDollars(cell, reverse = false) {
     if (reverse) condition = !condition;
 
     cell.getElement().style.color = 
-        condition? '#007700' : '#770000';
+        condition? '#000000' : '#770000';
 
     return asUsdDollars(cell);
 }
