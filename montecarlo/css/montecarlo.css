@@ -76,22 +76,6 @@ html, body {
     line-height: var(--graph-pane-height); /* vertical align */
     z-index: 1;
 }
-.simulation-spinner {
-    position: absolute;
-    top: calc(0.5*var(--graph-pane-height) - 13px);    
-    left: calc(0.5*(100vw - var(--input-pane-width) - 5px) - 13px);
-    border: 5px solid #f3f3f3; /* Light grey */
-    border-top: 5px solid #093145; /* Blue */
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    animation: spin 2s linear infinite;
-    z-index: 1
-}  
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
 .cashflow-pane {
     display: flex;
     position: absolute;

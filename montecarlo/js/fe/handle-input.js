@@ -41,8 +41,6 @@ function onSimulate() {
 function recieveWorkerMessage(event) {
 
     let progressDisplay = document.getElementById('simulation-progress-text-id');
-    let spinnerDisplay = document.getElementById('simulation-spinner-id');
-
     let graphDisplay = document.getElementById('graph-canvas-id');
 
     switch (event.data.notice) {
@@ -50,7 +48,6 @@ function recieveWorkerMessage(event) {
         case 'done':
             global.mctrials = event.data.mctrials;
             progressDisplay.style.display = 'none';
-            spinnerDisplay.style.display = 'none';
             graphDisplay.style.display = 'inline';
 
             refreshGraph();
@@ -66,7 +63,6 @@ function recieveWorkerMessage(event) {
                 progressDisplay.innerHTML = `Sorting, transferring results ..`;
 
             progressDisplay.style.display = 'inline';
-            spinnerDisplay.style.display = 'inline';
             graphDisplay.style.display = 'none';
 
             break;
