@@ -38,6 +38,14 @@ function onSimulate() {
     global.worker.postMessage({command: 'simulate', input: global.input});
 }
 
+function onCancel() {
+
+    if (typeof global.worker  !== 'undefined') {
+        global.worker.terminate();
+        document.getElementById('startstop').value = 'simulate';
+    }
+}
+
 function recieveWorkerMessage(event) {
 
     let progressDisplay = document.getElementById('simulation-progress-text-id');
@@ -49,6 +57,7 @@ function recieveWorkerMessage(event) {
             global.mctrials = event.data.mctrials;
             progressDisplay.style.display = 'none';
             graphDisplay.style.display = 'inline';
+            document.getElementById('startstop').value = 'simulate';
 
             refreshGraph();
             refreshTable();

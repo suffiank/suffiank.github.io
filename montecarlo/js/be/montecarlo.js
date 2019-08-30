@@ -8,6 +8,7 @@ function workerCodeWrap() {
     var global = {};
     global.yearsToMs = 1000*3600*24*365;
     global.msToYears = 1.0/global.yearsToMs;
+    global.debug = false;
     
     self.addEventListener('message', handleCommand, false);
 
@@ -50,7 +51,10 @@ function refreshSimulation() {
 
             if (sfinal <= 0.0) return -1;
             if (tfinal <= 0.0) return 1;
-            return savg < tavg? -1 : 1;
+            // return savg < tavg? -1 : 1;
+
+            // debug: use final for simplicity
+            return sfinal < tfinal? -1 : 1;
     });
 
     global.mctrials = mctrials;
@@ -204,16 +208,17 @@ function balanceCashToInvestments(agent, market, absoluteTime, comments) {
                 purchased: absoluteTime,
             };
 
+            setFakeLastPayment(asset, market.securities[asset.symbol]);
             asset.costBasis = +(getAssetValue(asset, market, absoluteTime).toFixed(2));
             asset.units = Math.floor(purchaseAmount/asset.costBasis);
-            setFakeLastPayment(asset, market.securities[asset.symbol]);
             agent.portfolio.push(asset);
 
             let saleCost = asset.units*asset.costBasis;
             investmentCost += saleCost;
             agent.cash -= saleCost;
 
-            comments.push(`Purchased ${asset.units} shares of ${symbol} at $${asset.costBasis}.`);
+            interestStr = (100.0*market.interest).toFixed(2) + '%';
+            comments.push(`Purchased ${asset.units} shares of ${symbol} at $${asset.costBasis} while interest at ${interestStr}.`);
         }
     }
 
