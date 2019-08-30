@@ -106,7 +106,9 @@ function getColumns(percentile) {
         formatter: (cell, formatterParams) => asUsdDollars(cell), 
     }
 
-    defaults.width = 110;
+    let thisYear = new Date().getFullYear();
+    defaults.width = 115;
+    addColumn(valueColumns, defaults, {title: `Assets (${thisYear})`, field: 'assetValueToday'});
     addColumn(valueColumns, defaults, {title: 'Assets', field: 'assetValue'});
     addColumn(valueColumns, defaults, {title: 'Cash', field: 'cash'});
     addColumn(valueColumns, defaults, {title: 'Bonds', field: 'bondsValue'});

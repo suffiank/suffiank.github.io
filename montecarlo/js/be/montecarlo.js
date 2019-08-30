@@ -358,6 +358,7 @@ function simulateRandomWalk() {
 
             var point = {
                 time: new Date(absoluteTime),
+                assetValueToday: assetValue*Math.exp(-market.inflation*relativeTime),
                 assetValue: assetValue,
                 cash: agent.cash,
                 spyPrice: market.securities['SPY'].price,
