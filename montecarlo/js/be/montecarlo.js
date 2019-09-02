@@ -43,8 +43,8 @@ function refreshSimulation() {
     mctrials = mctrials.sort(
         (s,t) => {
 
-            let savg = s.reduce((p,q) => p + q.assetValue, 0)/s.length;
-            let tavg = t.reduce((p,q) => p + q.assetValue, 0)/t.length;
+            // let savg = s.reduce((p,q) => p + q.assetValue, 0)/s.length;
+            // let tavg = t.reduce((p,q) => p + q.assetValue, 0)/t.length;
 
             let sfinal = s[s.length-1].assetValue;
             let tfinal = t[t.length-1].assetValue;
@@ -224,6 +224,20 @@ function balanceCashToInvestments(agent, market, absoluteTime, comments) {
 
     return {invested: investmentCost, liquidated: liquidated, 
         shortGain: shortCapitalGain, longGain: longCapitalGain};
+}
+
+function balanceStockToBonds(agent, market, absoluteTime, comments) {
+
+    const {stockValue, bondsValue} = 
+        getPortfolioValuations(agent.portfolio, market, absoluteTime);
+
+    let stockToBonds = stockValue/(stockValue + bondsValue);
+    if ( stockToBonds > agent.stockToBonds + 0.1 ) {
+        // trigger sale of stock for bonds
+    }
+    if ( stockToBonds < agent.stockToBonds - 0.1 ) {
+        // trigger sale of bonds for stock
+    }
 }
 
 function calculateTaxes(brackets, income) {
