@@ -158,7 +158,8 @@ function recieveSecuritiesPayouts(agent, market, absoluteTime, comments) {
 
 function balanceCashToInvestments(agent, market, absoluteTime, comments) {
 
-    agent.portfolio = agent.portfolio.sort((a,b) => a.purchased < b.purchased? -1:1);
+    agent.portfolio = 
+        agent.portfolio.sort((a,b) => a.purchased < b.purchased? -1:1);
 
     let shortCapitalGain = 0.0, longCapitalGain = 0.0;
     let liquidated = 0.0;
@@ -239,6 +240,28 @@ function calculateTaxes(brackets, income) {
     }
 
     return taxes;
+}
+
+function balanceStockToBonds(agent, market, absoluteTime, comments) {
+
+    const {stockValue, bondsValue} = 
+        getPortfolioValuations(agent.portfolio, market, absoluteTime);
+
+    let stockPrice = market.securities['SPY'].price;
+    let bondPrice = market.securities['UST']
+
+    let assetValue = stockValue + bondsValue;
+    let ratio = stockValue/(stockValue + bondsValue);
+    let target = agent.stockToBonds;
+
+    // trigger buy/sell to balance if outside range
+    if (ratio < target - 0.1 || target + 0.1 < ratio)
+        
+        let targetStockValue = target*assetValue;
+        let targetBondValue = (1.0-target)*assetValue;
+
+        let stockShares = (targetStockValue - stockValue)/stock.price;
+    }
 }
 
 function payTaxes(agent, taxYear, earnedIncome, capitalGain) {
